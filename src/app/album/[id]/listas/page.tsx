@@ -31,6 +31,69 @@ async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
+const styles = {
+  page: { padding: 16, maxWidth: 980, margin: "0 auto" } as React.CSSProperties,
+  topRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 10,
+    flexWrap: "wrap",
+  } as React.CSSProperties,
+  btn: {
+    padding: "10px 14px",
+    borderRadius: 12,
+    border: "1px solid rgba(0,0,0,0.15)",
+    background: "white",
+    fontWeight: 800,
+    cursor: "pointer",
+  } as React.CSSProperties,
+  btnSoft: {
+    padding: "10px 14px",
+    borderRadius: 12,
+    border: "1px solid rgba(0,0,0,0.15)",
+    background: "rgba(0,0,0,0.04)",
+    fontWeight: 800,
+    cursor: "pointer",
+  } as React.CSSProperties,
+  pillRow: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 } as React.CSSProperties,
+  pill: (active: boolean) =>
+    ({
+      padding: "10px 14px",
+      borderRadius: 999,
+      border: "1px solid rgba(0,0,0,0.15)",
+      background: active ? "rgba(0,0,0,0.85)" : "white",
+      color: active ? "white" : "#111827",
+      fontWeight: 900,
+      cursor: "pointer",
+    }) as React.CSSProperties,
+  card: {
+    border: "1px solid rgba(0,0,0,0.12)",
+    borderRadius: 16,
+    padding: 14,
+    background: "white",
+    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+  } as React.CSSProperties,
+  label: { display: "flex", alignItems: "center", gap: 8, fontWeight: 700 } as React.CSSProperties,
+  textarea: {
+    width: "100%",
+    padding: 12,
+    borderRadius: 14,
+    border: "1px solid rgba(0,0,0,0.15)",
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+    fontSize: 13,
+    lineHeight: 1.35,
+    background: "rgba(0,0,0,0.03)",
+  } as React.CSSProperties,
+  toast: {
+    padding: "8px 10px",
+    borderRadius: 999,
+    border: "1px solid rgba(0,0,0,0.15)",
+    background: "rgba(0,0,0,0.06)",
+    fontWeight: 800,
+  } as React.CSSProperties,
+};
+
 export default function ListasPage() {
   const params = useParams<{ id: string }>();
   const albumId = params?.id || ALBUM.id;
@@ -42,11 +105,7 @@ export default function ListasPage() {
   const [withQty, setWithQty] = React.useState(true);
   const [toast, setToast] = React.useState<string | null>(null);
 
-  const missing = React.useMemo(
-    () => getMissing(ALBUM.start, ALBUM.end, quantities),
-    [quantities]
-  );
-
+  const missing = React.useMemo(() => getMissing(ALBUM.start, ALBUM.end, quantities), [quantities]);
   const dups = React.useMemo(() => getDuplicates(quantities), [quantities]);
 
   const faltamText = React.useMemo(
@@ -54,144 +113,126 @@ export default function ListasPage() {
     [missing, wrap]
   );
 
-  const repetidasRaw = React.useMemo(
-    () => formatDuplicates(dups, withQty),
-    [dups, withQty]
-  );
+  const repetidasRaw = React.useMemo(() => formatDuplicates(dups, withQty), [dups, withQty]);
 
   const repetidasText = React.useMemo(() => {
+    if (!repetidasRaw) return "";
     if (!wrap) return repetidasRaw;
-    const items = repetidasRaw ? repetidasRaw.split(", ") : [];
+    const items = repetidasRaw.split(", ");
     return formatCommaListWrapped(items, 25);
   }, [repetidasRaw, wrap]);
 
   const whatsappText = React.useMemo(
-    () =>
-      buildWhatsappMessage({
-        albumName: ALBUM.name,
-        missing,
-        dups,
-        withQty,
-      }),
+    () => buildWhatsappMessage({ albumName: ALBUM.name, missing, dups, withQty }),
     [missing, dups, withQty]
   );
 
   const doCopy = async (text: string) => {
     const ok = await copyToClipboard(text);
-    setToast(ok ? "Copiado!" : "Não consegui copiar automaticamente. Copie manualmente.");
+    setToast(ok ? "✅ Copiado!" : "⚠️ Não consegui copiar automaticamente (copie manualmente).");
     window.setTimeout(() => setToast(null), 2200);
   };
 
+  const subtitle =
+    tab === "faltam"
+      ? `Faltam: ${missing.length}`
+      : tab === "repetidas"
+      ? `Repetidas (tipos): ${dups.length}`
+      : "Mensagem pronta para grupo";
+
   return (
-    <main style={{ padding: 16, maxWidth: 980, margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
-        <Link
-          href={`/album/${albumId}`}
-          style={{
-            padding: "8px 12px",
-            borderRadius: 10,
-            border: "1px solid rgba(0,0,0,0.15)",
-            textDecoration: "none",
-            fontWeight: 700,
-          }}
-        >
+    <main style={styles.page}>
+      <div style={styles.topRow}>
+        <Link href={`/album/${albumId}`} style={{ ...styles.btnSoft, textDecoration: "none", display: "inline-block" }}>
           ← Voltar
         </Link>
 
-        <div style={{ fontSize: 18, fontWeight: 900 }}>Listas</div>
+        <div style={{ fontSize: 18, fontWeight: 950 }}>Listas</div>
 
-        <div style={{ marginLeft: "auto", opacity: 0.8 }}>{toast ? <b>{toast}</b> : null}</div>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+          {toast ? <span style={styles.toast}>{toast}</span> : null}
+        </div>
       </div>
 
-      <p style={{ marginTop: 0, marginBottom: 12, opacity: 0.85 }}>
-        {ALBUM.name} • Faltam: <b>{missing.length}</b> • Repetidas (tipos): <b>{dups.length}</b>
-      </p>
+      <div style={{ marginBottom: 12, opacity: 0.85 }}>
+        <b>{ALBUM.name}</b> • {subtitle}
+      </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-        <button onClick={() => setTab("faltam")} style={{ padding: "8px 12px", borderRadius: 10, fontWeight: tab === "faltam" ? 900 : 700 }}>
+      <div style={styles.pillRow}>
+        <button onClick={() => setTab("faltam")} style={styles.pill(tab === "faltam")}>
           Faltam
         </button>
-        <button onClick={() => setTab("repetidas")} style={{ padding: "8px 12px", borderRadius: 10, fontWeight: tab === "repetidas" ? 900 : 700 }}>
+        <button onClick={() => setTab("repetidas")} style={styles.pill(tab === "repetidas")}>
           Repetidas
         </button>
-        <button onClick={() => setTab("mensagem")} style={{ padding: "8px 12px", borderRadius: 10, fontWeight: tab === "mensagem" ? 900 : 700 }}>
-          Mensagem WhatsApp
+        <button onClick={() => setTab("mensagem")} style={styles.pill(tab === "mensagem")}>
+          WhatsApp
         </button>
       </div>
 
-      {/* Options */}
-      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 12 }}>
-        <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <input type="checkbox" checked={wrap} onChange={(e) => setWrap(e.target.checked)} />
-          Quebrar em linhas
-        </label>
-
-        {tab !== "faltam" && (
-          <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <input type="checkbox" checked={withQty} onChange={(e) => setWithQty(e.target.checked)} />
-            Mostrar quantidades (xN)
+      <div style={styles.card}>
+        {/* Options */}
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 12 }}>
+          <label style={styles.label}>
+            <input type="checkbox" checked={wrap} onChange={(e) => setWrap(e.target.checked)} />
+            Quebrar em linhas
           </label>
+
+          {tab !== "faltam" && (
+            <label style={styles.label}>
+              <input type="checkbox" checked={withQty} onChange={(e) => setWithQty(e.target.checked)} />
+              Mostrar quantidades (xN)
+            </label>
+          )}
+        </div>
+
+        {/* Actions + Text */}
+        {tab === "faltam" && (
+          <>
+            <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+              <button onClick={() => doCopy(`Faltam: ${formatCommaList(missing)}`)} style={styles.btn}>
+                Copiar para WhatsApp
+              </button>
+              <button onClick={() => doCopy(faltamText)} style={styles.btnSoft}>
+                Copiar só números
+              </button>
+            </div>
+
+            <textarea readOnly value={faltamText} rows={10} style={styles.textarea} />
+          </>
+        )}
+
+        {tab === "repetidas" && (
+          <>
+            <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+              <button onClick={() => doCopy(`Repetidas: ${formatDuplicates(dups, withQty)}`)} style={styles.btn}>
+                Copiar para WhatsApp
+              </button>
+              <button onClick={() => doCopy(repetidasText)} style={styles.btnSoft}>
+                Copiar só lista
+              </button>
+            </div>
+
+            <textarea readOnly value={repetidasText} rows={10} style={styles.textarea} />
+          </>
+        )}
+
+        {tab === "mensagem" && (
+          <>
+            <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+              <button onClick={() => doCopy(whatsappText)} style={styles.btn}>
+                Copiar mensagem
+              </button>
+              <button onClick={() => doCopy(whatsappText.replaceAll("\n", " "))} style={styles.btnSoft}>
+                Copiar em 1 linha
+              </button>
+            </div>
+
+            <textarea readOnly value={whatsappText} rows={8} style={styles.textarea} />
+          </>
         )}
       </div>
-
-      {/* Content */}
-      {tab === "faltam" && (
-        <section>
-          <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-            <button onClick={() => doCopy(`Faltam: ${formatCommaList(missing)}`)} style={{ padding: "8px 12px", borderRadius: 10 }}>
-              Copiar (WhatsApp)
-            </button>
-            <button onClick={() => doCopy(faltamText)} style={{ padding: "8px 12px", borderRadius: 10 }}>
-              Copiar (só números)
-            </button>
-          </div>
-
-          <textarea
-            readOnly
-            value={faltamText}
-            rows={10}
-            style={{ width: "100%", padding: 12, borderRadius: 12, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
-          />
-        </section>
-      )}
-
-      {tab === "repetidas" && (
-        <section>
-          <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-            <button onClick={() => doCopy(`Repetidas: ${formatDuplicates(dups, withQty)}`)} style={{ padding: "8px 12px", borderRadius: 10 }}>
-              Copiar (WhatsApp)
-            </button>
-            <button onClick={() => doCopy(repetidasText)} style={{ padding: "8px 12px", borderRadius: 10 }}>
-              Copiar (só lista)
-            </button>
-          </div>
-
-          <textarea
-            readOnly
-            value={repetidasText || ""}
-            rows={10}
-            style={{ width: "100%", padding: 12, borderRadius: 12, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
-          />
-        </section>
-      )}
-
-      {tab === "mensagem" && (
-        <section>
-          <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-            <button onClick={() => doCopy(whatsappText)} style={{ padding: "8px 12px", borderRadius: 10 }}>
-              Copiar mensagem
-            </button>
-          </div>
-
-          <textarea
-            readOnly
-            value={whatsappText}
-            rows={8}
-            style={{ width: "100%", padding: 12, borderRadius: 12, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
-          />
-        </section>
-      )}
     </main>
   );
 }
