@@ -1,13 +1,13 @@
 export type Quantities = Record<string, number>;
 
-export function getMissing(start: number, end: number, quantities: Quantities): string[] {
+export function getMissing(ids: string[], quantities: Quantities): string[] {
   const missing: string[] = [];
-  for (let i = start; i <= end; i++) {
-    const id = String(i);
+  for (const id of ids) {
     if ((quantities[id] ?? 0) === 0) missing.push(id);
   }
   return missing;
 }
+
 
 export function getDuplicates(quantities: Quantities): Array<{ id: string; total: number }> {
   const dups: Array<{ id: string; total: number }> = [];

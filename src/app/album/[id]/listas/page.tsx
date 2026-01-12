@@ -12,6 +12,9 @@ import {
   formatDuplicates,
   buildWhatsappMessage,
 } from "@/utils/lists";
+import { getAlbumById } from "@/data/albums";
+import { expandAlbum } from "@/utils/album";
+
 
 const ALBUM = {
   id: "topps-ucl-2025-2026",
@@ -19,6 +22,7 @@ const ALBUM = {
   start: 1,
   end: 574,
 };
+
 
 type Tab = "faltam" | "repetidas" | "mensagem";
 
@@ -98,6 +102,10 @@ export default function ListasPage() {
   const params = useParams<{ id: string }>();
   const albumId = params?.id || ALBUM.id;
 
+  const album = getAlbumById(albumId) ?? getAlbumById("topps-ucl-2025-2026")!;
+  const ids = React.useMemo(() => expandAlbum(album), [album]);
+
+
   const { quantities } = useAlbumState(albumId);
 
   const [tab, setTab] = React.useState<Tab>("faltam");
@@ -105,7 +113,8 @@ export default function ListasPage() {
   const [withQty, setWithQty] = React.useState(true);
   const [toast, setToast] = React.useState<string | null>(null);
 
-  const missing = React.useMemo(() => getMissing(ALBUM.start, ALBUM.end, quantities), [quantities]);
+  const missing = React.useMemo(() => getMissing(ids, quantities), [ids, quantities]);
+
   const dups = React.useMemo(() => getDuplicates(quantities), [quantities]);
 
   const faltamText = React.useMemo(

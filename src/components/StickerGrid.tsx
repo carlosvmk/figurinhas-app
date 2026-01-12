@@ -6,8 +6,7 @@ import StickerCell from "./StickerCell";
 type FilterMode = "all" | "missing" | "dups";
 
 type StickerGridProps = {
-  start: number;
-  end: number;
+  ids: string[];
   quantities: Record<string, number>;
   onAct: (id: string) => void;
   highlightId?: string;
@@ -15,19 +14,12 @@ type StickerGridProps = {
 };
 
 export default function StickerGrid({
-  start,
-  end,
+  ids,
   quantities,
   onAct,
   highlightId,
   filter = "all",
 }: StickerGridProps) {
-  const ids = React.useMemo(() => {
-    const arr: string[] = [];
-    for (let i = start; i <= end; i++) arr.push(String(i));
-    return arr;
-  }, [start, end]);
-
   return (
     <div
       style={{
@@ -41,14 +33,14 @@ export default function StickerGrid({
         const isMissing = qty === 0;
         const isDup = qty >= 2;
 
-        // “Filtro visual”: apagamos o que não é alvo
         const dim =
-          filter === "all" ? false :
-          filter === "missing" ? !isMissing :
-          /* filter === "dups" */ !isDup;
+          filter === "all"
+            ? false
+            : filter === "missing"
+            ? !isMissing
+            : !isDup;
 
-        // opcional: desabilitar clique quando está apagado (evita erro)
-        const disabled = dim;
+        const disabled = dim; // se quiser permitir clicar mesmo apagado: troque por false
 
         return (
           <StickerCell
