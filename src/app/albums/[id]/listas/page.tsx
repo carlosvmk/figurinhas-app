@@ -11,6 +11,7 @@ import {
   formatCommaListWrapped,
   formatDuplicates,
   buildWhatsappMessage,
+  type WhatsappMode,
 } from "@/utils/lists";
 import { getAlbumById } from "@/data/albums";
 import { expandAlbum } from "@/utils/album";
@@ -46,6 +47,7 @@ export default function ListasPage() {
   const [wrap, setWrap] = React.useState(false);
   const [withQty, setWithQty] = React.useState(true);
   const [toast, setToast] = React.useState<string | null>(null);
+  const [whatsappMode, setWhatsappMode] = React.useState<WhatsappMode>("both");
 
   const missing = React.useMemo(() => getMissing(ids, quantities), [ids, quantities]);
 
@@ -66,8 +68,8 @@ export default function ListasPage() {
   }, [repetidasRaw, wrap]);
 
   const whatsappText = React.useMemo(
-    () => buildWhatsappMessage({ albumName: album?.name ?? "Álbum", missing, dups, withQty }),
-    [missing, dups, withQty]
+    () => buildWhatsappMessage({ albumName: album?.name ?? "Álbum", missing, dups, withQty, mode: whatsappMode }),
+    [album?.name, missing, dups, withQty, whatsappMode]
   );
 
   const doCopy = async (text: string) => {
@@ -97,7 +99,7 @@ export default function ListasPage() {
       <div className="flex items-center gap-2.5 mb-2.5 flex-wrap">
         <Link
           href={`/albums/${albumId}`}
-          className="px-3.5 py-2.5 rounded-xl border border-border-default bg-black/[0.04] no-underline font-extrabold inline-block"
+          className="px-3.5 py-2.5 rounded-xl border border-border-default bg-bg-soft no-underline font-extrabold inline-block"
         >
           ← Voltar
         </Link>
@@ -106,7 +108,7 @@ export default function ListasPage() {
 
         <div className="ml-auto flex items-center gap-2.5">
           {toast ? (
-            <span className="px-2.5 py-2 rounded-full border border-border-default bg-black/[0.06] font-extrabold">
+            <span className="px-2.5 py-2 rounded-full border border-border-default bg-bg-soft font-extrabold">
               {toast}
             </span>
           ) : null}
@@ -125,7 +127,7 @@ export default function ListasPage() {
             onClick={() => setTab(t)}
             className={[
               "px-3.5 py-2.5 rounded-full border border-border-default font-black cursor-pointer",
-              tab === t ? "bg-black/85 text-white" : "bg-card text-gray-900",
+              tab === t ? "bg-foreground text-background" : "bg-card text-foreground",
             ].join(" ")}
           >
             {t === "faltam" ? "Faltam" : t === "repetidas" ? "Repetidas" : "WhatsApp"}
@@ -133,7 +135,7 @@ export default function ListasPage() {
         ))}
       </div>
 
-      <div className="border border-black/12 rounded-2xl p-3.5 bg-card shadow-card">
+      <div className="border border-border-default rounded-2xl p-3.5 bg-card shadow-card">
         {/* Options */}
         <div className="flex gap-4 flex-wrap mb-3">
           <label className="flex items-center gap-2 font-bold">
@@ -161,7 +163,7 @@ export default function ListasPage() {
               </button>
               <button
                 onClick={() => doCopy(faltamText)}
-                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-black/[0.04] font-extrabold cursor-pointer"
+                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-bg-soft font-extrabold cursor-pointer"
               >
                 Copiar só números
               </button>
@@ -171,7 +173,7 @@ export default function ListasPage() {
               readOnly
               value={faltamText}
               rows={10}
-              className="w-full p-3 rounded-[14px] border border-border-default font-mono text-[13px] leading-[1.35] bg-black/[0.03]"
+              className="w-full p-3 rounded-[14px] border border-border-default font-mono text-[13px] leading-[1.35] bg-bg-soft text-foreground"
             />
           </>
         )}
@@ -187,7 +189,7 @@ export default function ListasPage() {
               </button>
               <button
                 onClick={() => doCopy(repetidasText)}
-                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-black/[0.04] font-extrabold cursor-pointer"
+                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-bg-soft font-extrabold cursor-pointer"
               >
                 Copiar só lista
               </button>
@@ -197,7 +199,7 @@ export default function ListasPage() {
               readOnly
               value={repetidasText}
               rows={10}
-              className="w-full p-3 rounded-[14px] border border-border-default font-mono text-[13px] leading-[1.35] bg-black/[0.03]"
+              className="w-full p-3 rounded-[14px] border border-border-default font-mono text-[13px] leading-[1.35] bg-bg-soft text-foreground"
             />
           </>
         )}
@@ -205,15 +207,30 @@ export default function ListasPage() {
         {tab === "mensagem" && (
           <>
             <div className="flex gap-2 mb-2.5 flex-wrap">
+              {(["both", "missing", "duplicates"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setWhatsappMode(m)}
+                  className={[
+                    "px-3 py-1.5 rounded-full border border-border-default text-sm font-bold cursor-pointer",
+                    whatsappMode === m ? "bg-foreground text-background" : "bg-card text-foreground",
+                  ].join(" ")}
+                >
+                  {m === "both" ? "Faltam + Repetidas" : m === "missing" ? "Só faltam" : "Só repetidas"}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-2 mb-2.5 flex-wrap">
               <button
                 onClick={() => doCopy(whatsappText)}
-                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-card font-extrabold cursor-pointer"
+                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-card font-extrabold cursor-pointer text-foreground"
               >
                 Copiar mensagem
               </button>
               <button
                 onClick={() => doCopy(whatsappText.replaceAll("\n", " "))}
-                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-black/[0.04] font-extrabold cursor-pointer"
+                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-bg-soft font-extrabold cursor-pointer text-foreground"
               >
                 Copiar em 1 linha
               </button>
@@ -222,8 +239,8 @@ export default function ListasPage() {
             <textarea
               readOnly
               value={whatsappText}
-              rows={8}
-              className="w-full p-3 rounded-[14px] border border-border-default font-mono text-[13px] leading-[1.35] bg-black/[0.03]"
+              rows={10}
+              className="w-full p-3 rounded-[14px] border border-border-default font-mono text-[13px] leading-[1.35] bg-bg-soft text-foreground"
             />
           </>
         )}

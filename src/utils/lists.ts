@@ -35,19 +35,40 @@ export function formatDuplicates(dups: Array<{ id: string; total: number }>, wit
   return dups.map((d) => `${d.id}(x${d.total})`).join(", ");
 }
 
+export type WhatsappMode = "both" | "missing" | "duplicates";
+
 export function buildWhatsappMessage(params: {
   albumName: string;
   missing: string[];
   dups: Array<{ id: string; total: number }>;
   withQty: boolean;
+  mode?: WhatsappMode;
 }): string {
-  const { albumName, missing, dups, withQty } = params;
+  const { albumName, missing, dups, withQty, mode = "both" } = params;
   const rep = formatDuplicates(dups, withQty);
   const falt = formatCommaList(missing);
 
-  return [
-    `${albumName}`,
-    rep ? `Repetidas: ${rep}` : `Repetidas: (nenhuma)`,
-    missing.length ? `Faltam: ${falt}` : `Faltam: (nenhuma)`,
-  ].join("\n");
+  const lines: string[] = [`📚 ${albumName}`, ""];
+
+  if (mode !== "duplicates") {
+    lines.push(
+      missing.length
+        ? `❌ Faltam (${missing.length}):\n${falt}`
+        : "❌ Faltam: (nenhuma)"
+    );
+  }
+
+  if (mode === "both" && missing.length && dups.length) {
+    lines.push("");
+  }
+
+  if (mode !== "missing") {
+    lines.push(
+      dups.length
+        ? `✅ Repetidas (${dups.length}):\n${rep}`
+        : "✅ Repetidas: (nenhuma)"
+    );
+  }
+
+  return lines.join("\n");
 }
