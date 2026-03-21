@@ -3,7 +3,7 @@
 import Link from "next/link";
 import React from "react";
 import useAlbumsCatalog from "@/hooks/useAlbumsCatalog";
-import { downloadBackup, importData, type ImportMode } from "@/utils/storage";
+import { downloadBackup, importData, deleteCustomAlbum, type ImportMode } from "@/utils/storage";
 
 type ImportState =
   | { step: "idle" }
@@ -12,9 +12,11 @@ type ImportState =
   | { step: "error"; message: string };
 
 export default function HomePage() {
-  const { albums } = useAlbumsCatalog();
+  const { albums, customAlbums, refresh } = useAlbumsCatalog();
+  const customIds = React.useMemo(() => new Set(customAlbums.map((a) => a.id)), [customAlbums]);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const [importState, setImportState] = React.useState<ImportState>({ step: "idle" });
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: string; name: string } | null>(null);
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -131,18 +133,61 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* Modal de confirmação de exclusão */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-card border border-border-default rounded-2xl p-6 max-w-sm w-[calc(100%-2rem)] shadow-lg">
+            <div className="font-[950] text-lg mb-3">Deletar álbum</div>
+            <p className="mb-4 text-sm opacity-80">
+              Tem certeza que deseja deletar <strong>{deleteTarget.name}</strong>? Todos os dados deste álbum serão perdidos.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="px-4 py-2.5 rounded-xl font-bold cursor-pointer bg-transparent text-inherit border border-border-default"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  deleteCustomAlbum(deleteTarget.id);
+                  setDeleteTarget(null);
+                  refresh();
+                }}
+                className="px-4 py-2.5 rounded-xl font-bold cursor-pointer bg-red-500 text-white border-none"
+              >
+                Deletar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">
         {albums.map((a) => (
-          <Link
+          <div
             key={a.id}
-            href={`/albums/${a.id}`}
-            className="no-underline text-inherit border border-black/12 rounded-2xl p-3.5 bg-card shadow-card block"
+            className="relative border border-black/12 rounded-2xl bg-card shadow-card"
           >
-            <div className="font-[950] mb-1.5">{a.name}</div>
-            <div className="opacity-75 font-mono text-xs">
-              {a.id}
-            </div>
-          </Link>
+            {customIds.has(a.id) && (
+              <button
+                onClick={() => setDeleteTarget({ id: a.id, name: a.name })}
+                className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-lg text-sm opacity-40 hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 cursor-pointer bg-transparent border-none text-inherit transition-all"
+                title="Deletar álbum"
+              >
+                ✕
+              </button>
+            )}
+            <Link
+              href={`/albums/${a.id}`}
+              className="no-underline text-inherit p-3.5 block"
+            >
+              <div className="font-[950] mb-1.5">{a.name}</div>
+              <div className="opacity-75 font-mono text-xs">
+                {a.id}
+              </div>
+            </Link>
+          </div>
         ))}
       </div>
     </main>

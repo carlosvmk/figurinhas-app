@@ -158,4 +158,6 @@ export function addCustomAlbum(album: AlbumDefinition) {
 export function deleteCustomAlbum(id: string) {
   const existing = loadCustomAlbums();
   saveCustomAlbums(existing.filter((a) => a.id !== id));
+  // remove quantidades para não deixar lixo
+  localStorage.removeItem(`${QUANTITIES_PREFIX}${id}${QUANTITIES_SUFFIX}`);
 }
