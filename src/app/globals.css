@@ -8,8 +8,19 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-bg-soft: var(--bg-soft);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-border-default: var(--border);
+  --color-sticker-missing: #e5e7eb;
+  --color-sticker-have: #22c55e;
+  --color-sticker-dup: #3b82f6;
+  --color-sticker-highlight: #f59e0b;
+  --color-mode-add: #16a34a;
+  --color-mode-remove: #dc2626;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --shadow-card: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
 @media (prefers-color-scheme: dark) {

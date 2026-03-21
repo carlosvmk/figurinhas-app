@@ -8,47 +8,29 @@ export default function HomePage() {
   const { albums } = useAlbumsCatalog();
 
   return (
-    <main style={{ padding: 16, maxWidth: 980, margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-        <div style={{ fontSize: 20, fontWeight: 950 }}>Álbuns</div>
+    <main className="p-4 max-w-[980px] mx-auto">
+      <div className="flex items-center gap-2.5 mb-3.5 flex-wrap">
+        <div className="text-xl font-[950]">Álbuns</div>
 
-        <div style={{ marginLeft: "auto" }}>
+        <div className="ml-auto">
           <Link
             href="/albums/new"
-            style={{
-              padding: "10px 14px",
-              borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.15)",
-              background: "rgba(0,0,0,0.85)",
-              color: "white",
-              textDecoration: "none",
-              fontWeight: 950,
-              display: "inline-block",
-            }}
+            className="px-3.5 py-2.5 rounded-xl border border-border-default bg-black/85 text-white no-underline font-[950] inline-block"
           >
             + Criar álbum
           </Link>
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+      <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">
         {albums.map((a) => (
           <Link
             key={a.id}
-            href={`/album/${a.id}`}
-            style={{
-              textDecoration: "none",
-              color: "inherit",
-              border: "1px solid rgba(0,0,0,0.12)",
-              borderRadius: 16,
-              padding: 14,
-              background: "white",
-              boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-              display: "block",
-            }}
+            href={`/albums/${a.id}`}
+            className="no-underline text-inherit border border-black/12 rounded-2xl p-3.5 bg-card shadow-card block"
           >
-            <div style={{ fontWeight: 950, marginBottom: 6 }}>{a.name}</div>
-            <div style={{ opacity: 0.75, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 12 }}>
+            <div className="font-[950] mb-1.5">{a.name}</div>
+            <div className="opacity-75 font-mono text-xs">
               {a.id}
             </div>
           </Link>

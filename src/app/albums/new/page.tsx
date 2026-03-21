@@ -117,36 +117,21 @@ export default function NewAlbumPage() {
   };
 
   return (
-    <main style={{ padding: 16, maxWidth: 980, margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+    <main className="p-4 max-w-[980px] mx-auto">
+      <div className="flex items-center gap-2.5 mb-3 flex-wrap">
         <Link
           href="/"
-          style={{
-            padding: "10px 14px",
-            borderRadius: 12,
-            border: "1px solid rgba(0,0,0,0.15)",
-            background: "rgba(0,0,0,0.04)",
-            textDecoration: "none",
-            fontWeight: 900,
-          }}
+          className="px-3.5 py-2.5 rounded-xl border border-border-default bg-black/[0.04] no-underline font-black"
         >
           ← Voltar
         </Link>
 
-        <div style={{ fontSize: 18, fontWeight: 950 }}>Criar álbum</div>
+        <div className="text-lg font-[950]">Criar álbum</div>
 
-        <div style={{ marginLeft: "auto" }}>
+        <div className="ml-auto">
           <button
             onClick={onSave}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.15)",
-              background: "rgba(0,0,0,0.85)",
-              color: "white",
-              fontWeight: 950,
-              cursor: "pointer",
-            }}
+            className="px-3.5 py-2.5 rounded-xl border border-border-default bg-black/85 text-white font-[950] cursor-pointer"
           >
             Salvar
           </button>
@@ -154,97 +139,62 @@ export default function NewAlbumPage() {
       </div>
 
       {msg && (
-        <div
-          style={{
-            marginBottom: 12,
-            padding: "10px 12px",
-            borderRadius: 12,
-            border: "1px solid rgba(0,0,0,0.15)",
-            background: "rgba(0,0,0,0.04)",
-            fontWeight: 800,
-          }}
-        >
+        <div className="mb-3 px-3 py-2.5 rounded-xl border border-border-default bg-black/[0.04] font-extrabold">
           {msg}
         </div>
       )}
 
-      <div
-        style={{
-          display: "grid",
-          gap: 12,
-          gridTemplateColumns: "1fr",
-          marginBottom: 14,
-          border: "1px solid rgba(0,0,0,0.12)",
-          borderRadius: 16,
-          padding: 14,
-          background: "white",
-          boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-        }}
-      >
-        <label style={{ fontWeight: 900 }}>Nome do álbum</label>
+      <div className="grid gap-3 mb-3.5 border border-black/12 rounded-2xl p-3.5 bg-card shadow-card">
+        <label className="font-black">Nome do álbum</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="ex.: Brasileirão 2025"
-          style={{ padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)" }}
+          className="px-3 py-2.5 rounded-xl border border-border-default"
         />
 
-        <label style={{ fontWeight: 900 }}>ID (slug)</label>
+        <label className="font-black">ID (slug)</label>
         <input
           value={id}
           onChange={(e) => setId(e.target.value)}
           placeholder="ex.: brasileirao-2025"
-          style={{ padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)" }}
+          className="px-3 py-2.5 rounded-xl border border-border-default"
         />
 
-        <div style={{ opacity: 0.75, fontWeight: 700 }}>
-          Dica: o ID vira a URL: <span style={{ fontFamily: "ui-monospace, Menlo, monospace" }}>/album/{id || "..."}</span>
+        <div className="opacity-75 font-bold">
+          Dica: o ID vira a URL: <span className="font-mono">/album/{id || "..."}</span>
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+      <div className="flex gap-2 flex-wrap mb-2.5">
         <button
           onClick={() => addSection("numericRange")}
-          style={{ padding: "10px 14px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)", fontWeight: 900, cursor: "pointer" }}
+          className="px-3.5 py-2.5 rounded-xl border border-border-default font-black cursor-pointer"
         >
           + Seção numérica (1–N)
         </button>
         <button
           onClick={() => addSection("prefixedRange")}
-          style={{ padding: "10px 14px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)", fontWeight: 900, cursor: "pointer" }}
+          className="px-3.5 py-2.5 rounded-xl border border-border-default font-black cursor-pointer"
         >
           + Seção prefixada (E1–EN)
         </button>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div className="flex flex-col gap-3">
         {sections.map((s) => (
           <div
             key={s.id}
-            style={{
-              border: "1px solid rgba(0,0,0,0.12)",
-              borderRadius: 16,
-              padding: 14,
-              background: "white",
-              boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-            }}
+            className="border border-black/12 rounded-2xl p-3.5 bg-card shadow-card"
           >
-            <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10, flexWrap: "wrap" }}>
-              <div style={{ fontWeight: 950 }}>
+            <div className="flex gap-2.5 items-center mb-2.5 flex-wrap">
+              <div className="font-[950]">
                 {s.type === "numericRange" ? "Seção numérica" : "Seção prefixada"}
               </div>
 
               <button
                 onClick={() => removeSection(s.id)}
-                style={{
-                  marginLeft: "auto",
-                  padding: "8px 10px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,0.15)",
-                  background: "rgba(220,38,38,0.10)",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
+                className="ml-auto px-2.5 py-2 rounded-xl border border-border-default bg-red-600/10 font-black cursor-pointer"
                 disabled={sections.length <= 1}
                 title={sections.length <= 1 ? "Mantenha ao menos uma seção" : "Remover seção"}
               >
@@ -252,52 +202,52 @@ export default function NewAlbumPage() {
               </button>
             </div>
 
-            <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-              <div style={{ display: "grid", gap: 6 }}>
-                <label style={{ fontWeight: 800 }}>Label</label>
+            <div className="grid gap-2.5 grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
+              <div className="grid gap-1.5">
+                <label className="font-extrabold">Label</label>
                 <input
                   value={s.label}
                   onChange={(e) => updateSection(s.id, { label: e.target.value } as any)}
-                  style={{ padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)" }}
+                  className="px-3 py-2.5 rounded-xl border border-border-default"
                 />
               </div>
 
               {s.type === "prefixedRange" && (
-                <div style={{ display: "grid", gap: 6 }}>
-                  <label style={{ fontWeight: 800 }}>Prefixo</label>
+                <div className="grid gap-1.5">
+                  <label className="font-extrabold">Prefixo</label>
                   <input
                     value={s.prefix}
                     onChange={(e) => updateSection(s.id, { prefix: e.target.value.toUpperCase() } as any)}
                     placeholder="ex.: E, CB, F"
-                    style={{ padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)" }}
+                    className="px-3 py-2.5 rounded-xl border border-border-default"
                   />
                 </div>
               )}
 
-              <div style={{ display: "grid", gap: 6 }}>
-                <label style={{ fontWeight: 800 }}>Start</label>
+              <div className="grid gap-1.5">
+                <label className="font-extrabold">Start</label>
                 <input
                   value={(s as any).start}
                   onChange={(e) => updateSection(s.id, { start: Number(e.target.value) } as any)}
                   inputMode="numeric"
-                  style={{ padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)" }}
+                  className="px-3 py-2.5 rounded-xl border border-border-default"
                 />
               </div>
 
-              <div style={{ display: "grid", gap: 6 }}>
-                <label style={{ fontWeight: 800 }}>End</label>
+              <div className="grid gap-1.5">
+                <label className="font-extrabold">End</label>
                 <input
                   value={(s as any).end}
                   onChange={(e) => updateSection(s.id, { end: Number(e.target.value) } as any)}
                   inputMode="numeric"
-                  style={{ padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)" }}
+                  className="px-3 py-2.5 rounded-xl border border-border-default"
                 />
               </div>
             </div>
 
-            <div style={{ marginTop: 10, opacity: 0.75, fontWeight: 700 }}>
+            <div className="mt-2.5 opacity-75 font-bold">
               Exemplo de IDs:{" "}
-              <span style={{ fontFamily: "ui-monospace, Menlo, monospace" }}>
+              <span className="font-mono">
                 {s.type === "numericRange" ? `${(s as any).start}, ${(s as any).start + 1}, ...` : `${s.prefix.toUpperCase()}${(s as any).start}, ${s.prefix.toUpperCase()}${(s as any).start + 1}, ...`}
               </span>
             </div>

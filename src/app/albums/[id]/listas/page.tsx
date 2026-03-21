@@ -17,7 +17,6 @@ import { expandAlbum } from "@/utils/album";
 import { loadCustomAlbums } from "@/utils/storage";
 import type { AlbumDefinition } from "@/types/album";
 
-
 type Tab = "faltam" | "repetidas" | "mensagem";
 
 async function copyToClipboard(text: string): Promise<boolean> {
@@ -28,69 +27,6 @@ async function copyToClipboard(text: string): Promise<boolean> {
     return false;
   }
 }
-
-const styles = {
-  page: { padding: 16, maxWidth: 980, margin: "0 auto" } as React.CSSProperties,
-  topRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 10,
-    flexWrap: "wrap",
-  } as React.CSSProperties,
-  btn: {
-    padding: "10px 14px",
-    borderRadius: 12,
-    border: "1px solid rgba(0,0,0,0.15)",
-    background: "white",
-    fontWeight: 800,
-    cursor: "pointer",
-  } as React.CSSProperties,
-  btnSoft: {
-    padding: "10px 14px",
-    borderRadius: 12,
-    border: "1px solid rgba(0,0,0,0.15)",
-    background: "rgba(0,0,0,0.04)",
-    fontWeight: 800,
-    cursor: "pointer",
-  } as React.CSSProperties,
-  pillRow: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 } as React.CSSProperties,
-  pill: (active: boolean) =>
-    ({
-      padding: "10px 14px",
-      borderRadius: 999,
-      border: "1px solid rgba(0,0,0,0.15)",
-      background: active ? "rgba(0,0,0,0.85)" : "white",
-      color: active ? "white" : "#111827",
-      fontWeight: 900,
-      cursor: "pointer",
-    }) as React.CSSProperties,
-  card: {
-    border: "1px solid rgba(0,0,0,0.12)",
-    borderRadius: 16,
-    padding: 14,
-    background: "white",
-    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-  } as React.CSSProperties,
-  label: { display: "flex", alignItems: "center", gap: 8, fontWeight: 700 } as React.CSSProperties,
-  textarea: {
-    width: "100%",
-    padding: 12,
-    borderRadius: 14,
-    border: "1px solid rgba(0,0,0,0.15)",
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-    fontSize: 13,
-    lineHeight: 1.35,
-    background: "rgba(0,0,0,0.03)",
-  } as React.CSSProperties,
-  toast: {
-    padding: "8px 10px",
-    borderRadius: 999,
-    border: "1px solid rgba(0,0,0,0.15)",
-    background: "rgba(0,0,0,0.06)",
-    fontWeight: 800,
-  } as React.CSSProperties,
-};
 
 export default function ListasPage() {
   const params = useParams<{ id: string }>();
@@ -103,7 +39,6 @@ export default function ListasPage() {
   }, [albumId]);
 
   const ids = React.useMemo(() => (album ? expandAlbum(album) : []), [album]);
-
 
   const { quantities } = useAlbumState(albumId);
 
@@ -150,54 +85,64 @@ export default function ListasPage() {
 
   if (!album) {
     return (
-      <main style={styles.page}>
-        <Link href="/" style={{ textDecoration: "none", fontWeight: 700 }}>← Álbuns</Link>
-        <p style={{ marginTop: 16 }}>Álbum não encontrado.</p>
+      <main className="p-4 max-w-[980px] mx-auto">
+        <Link href="/" className="no-underline font-bold">← Álbuns</Link>
+        <p className="mt-4">Álbum não encontrado.</p>
       </main>
     );
   }
 
   return (
-    <main style={styles.page}>
-      <div style={styles.topRow}>
-        <Link href={`/albums/${albumId}`} style={{ ...styles.btnSoft, textDecoration: "none", display: "inline-block" }}>
+    <main className="p-4 max-w-[980px] mx-auto">
+      <div className="flex items-center gap-2.5 mb-2.5 flex-wrap">
+        <Link
+          href={`/albums/${albumId}`}
+          className="px-3.5 py-2.5 rounded-xl border border-border-default bg-black/[0.04] no-underline font-extrabold inline-block"
+        >
           ← Voltar
         </Link>
 
-        <div style={{ fontSize: 18, fontWeight: 950 }}>Listas</div>
+        <div className="text-lg font-[950]">Listas</div>
 
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
-          {toast ? <span style={styles.toast}>{toast}</span> : null}
+        <div className="ml-auto flex items-center gap-2.5">
+          {toast ? (
+            <span className="px-2.5 py-2 rounded-full border border-border-default bg-black/[0.06] font-extrabold">
+              {toast}
+            </span>
+          ) : null}
         </div>
       </div>
 
-      <div style={{ marginBottom: 12, opacity: 0.85 }}>
-        <b>{album?.name ?? "Álbum não encontrado"}</b> • {subtitle}
+      <div className="mb-3 opacity-85">
+        <b>{album.name}</b> • {subtitle}
       </div>
 
       {/* Tabs */}
-      <div style={styles.pillRow}>
-        <button onClick={() => setTab("faltam")} style={styles.pill(tab === "faltam")}>
-          Faltam
-        </button>
-        <button onClick={() => setTab("repetidas")} style={styles.pill(tab === "repetidas")}>
-          Repetidas
-        </button>
-        <button onClick={() => setTab("mensagem")} style={styles.pill(tab === "mensagem")}>
-          WhatsApp
-        </button>
+      <div className="flex gap-2 flex-wrap mb-3">
+        {(["faltam", "repetidas", "mensagem"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={[
+              "px-3.5 py-2.5 rounded-full border border-border-default font-black cursor-pointer",
+              tab === t ? "bg-black/85 text-white" : "bg-card text-gray-900",
+            ].join(" ")}
+          >
+            {t === "faltam" ? "Faltam" : t === "repetidas" ? "Repetidas" : "WhatsApp"}
+          </button>
+        ))}
       </div>
 
-      <div style={styles.card}>
+      <div className="border border-black/12 rounded-2xl p-3.5 bg-card shadow-card">
         {/* Options */}
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 12 }}>
-          <label style={styles.label}>
+        <div className="flex gap-4 flex-wrap mb-3">
+          <label className="flex items-center gap-2 font-bold">
             <input type="checkbox" checked={wrap} onChange={(e) => setWrap(e.target.checked)} />
             Quebrar em linhas
           </label>
 
           {tab !== "faltam" && (
-            <label style={styles.label}>
+            <label className="flex items-center gap-2 font-bold">
               <input type="checkbox" checked={withQty} onChange={(e) => setWithQty(e.target.checked)} />
               Mostrar quantidades (xN)
             </label>
@@ -207,46 +152,79 @@ export default function ListasPage() {
         {/* Actions + Text */}
         {tab === "faltam" && (
           <>
-            <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-              <button onClick={() => doCopy(`Faltam: ${formatCommaList(missing)}`)} style={styles.btn}>
+            <div className="flex gap-2 mb-2.5 flex-wrap">
+              <button
+                onClick={() => doCopy(`Faltam: ${formatCommaList(missing)}`)}
+                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-card font-extrabold cursor-pointer"
+              >
                 Copiar para WhatsApp
               </button>
-              <button onClick={() => doCopy(faltamText)} style={styles.btnSoft}>
+              <button
+                onClick={() => doCopy(faltamText)}
+                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-black/[0.04] font-extrabold cursor-pointer"
+              >
                 Copiar só números
               </button>
             </div>
 
-            <textarea readOnly value={faltamText} rows={10} style={styles.textarea} />
+            <textarea
+              readOnly
+              value={faltamText}
+              rows={10}
+              className="w-full p-3 rounded-[14px] border border-border-default font-mono text-[13px] leading-[1.35] bg-black/[0.03]"
+            />
           </>
         )}
 
         {tab === "repetidas" && (
           <>
-            <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-              <button onClick={() => doCopy(`Repetidas: ${formatDuplicates(dups, withQty)}`)} style={styles.btn}>
+            <div className="flex gap-2 mb-2.5 flex-wrap">
+              <button
+                onClick={() => doCopy(`Repetidas: ${formatDuplicates(dups, withQty)}`)}
+                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-card font-extrabold cursor-pointer"
+              >
                 Copiar para WhatsApp
               </button>
-              <button onClick={() => doCopy(repetidasText)} style={styles.btnSoft}>
+              <button
+                onClick={() => doCopy(repetidasText)}
+                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-black/[0.04] font-extrabold cursor-pointer"
+              >
                 Copiar só lista
               </button>
             </div>
 
-            <textarea readOnly value={repetidasText} rows={10} style={styles.textarea} />
+            <textarea
+              readOnly
+              value={repetidasText}
+              rows={10}
+              className="w-full p-3 rounded-[14px] border border-border-default font-mono text-[13px] leading-[1.35] bg-black/[0.03]"
+            />
           </>
         )}
 
         {tab === "mensagem" && (
           <>
-            <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-              <button onClick={() => doCopy(whatsappText)} style={styles.btn}>
+            <div className="flex gap-2 mb-2.5 flex-wrap">
+              <button
+                onClick={() => doCopy(whatsappText)}
+                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-card font-extrabold cursor-pointer"
+              >
                 Copiar mensagem
               </button>
-              <button onClick={() => doCopy(whatsappText.replaceAll("\n", " "))} style={styles.btnSoft}>
+              <button
+                onClick={() => doCopy(whatsappText.replaceAll("\n", " "))}
+                className="px-3.5 py-2.5 rounded-xl border border-border-default bg-black/[0.04] font-extrabold cursor-pointer"
+              >
                 Copiar em 1 linha
               </button>
             </div>
 
-            <textarea readOnly value={whatsappText} rows={8} style={styles.textarea} />
+            <textarea
+              readOnly
+              value={whatsappText}
+              rows={8}
+              className="w-full p-3 rounded-[14px] border border-border-default font-mono text-[13px] leading-[1.35] bg-black/[0.03]"
+            />
           </>
         )}
       </div>

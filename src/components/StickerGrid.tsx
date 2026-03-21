@@ -21,13 +21,7 @@ export default function StickerGrid({
   filter = "all",
 }: StickerGridProps) {
   return (
-    <div
-      style={{
-        display: "grid",
-        gap: 8,
-        gridTemplateColumns: "repeat(auto-fill, minmax(44px, 1fr))",
-      }}
-    >
+    <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(44px,1fr))]">
       {ids.map((id) => {
         const qty = quantities[id] ?? 0;
         const isMissing = qty === 0;

@@ -10,8 +10,8 @@ type StickerCellProps = {
 };
 
 export default function StickerCell({ id, qty, onClick, highlight, dim, disabled }: StickerCellProps) {
-  const bg = qty === 0 ? "#e5e7eb" : qty === 1 ? "#22c55e" : "#3b82f6";
-  const fg = qty === 0 ? "#111827" : "#ffffff";
+  const bgClass = qty === 0 ? "bg-sticker-missing" : qty === 1 ? "bg-sticker-have" : "bg-sticker-dup";
+  const fgClass = qty === 0 ? "text-gray-900" : "text-white";
 
   return (
     <button
@@ -20,42 +20,21 @@ export default function StickerCell({ id, qty, onClick, highlight, dim, disabled
       onClick={onClick}
       disabled={disabled}
       aria-label={`Figurinha ${id}. Quantidade ${qty}`}
-      style={{
-        position: "relative",
-        width: "100%",
-        aspectRatio: "1 / 1",
-        borderRadius: 10,
-        border: highlight ? "3px solid #f59e0b" : "1px solid rgba(0,0,0,0.12)",
-        boxShadow: highlight ? "0 0 0 4px rgba(245, 158, 11, 0.35)" : "none",
-        background: bg,
-        color: fg,
-        fontWeight: 800,
-        fontSize: 14,
-        cursor: disabled ? "not-allowed" : "pointer",
-        userSelect: "none",
-        opacity: dim ? 0.25 : 1,
-        filter: dim ? "grayscale(35%)" : "none",
-      }}
+      className={[
+        "relative w-full aspect-square rounded-[10px] text-sm font-extrabold select-none",
+        bgClass,
+        fgClass,
+        highlight
+          ? "border-3 border-sticker-highlight shadow-[0_0_0_4px_rgba(245,158,11,0.35)]"
+          : "border border-black/12",
+        dim ? "opacity-25 grayscale-[35%]" : "",
+        disabled ? "cursor-not-allowed" : "cursor-pointer",
+      ].join(" ")}
     >
       {id}
 
       {qty >= 2 && (
-        <span
-          style={{
-            position: "absolute",
-            top: 6,
-            right: 6,
-            minWidth: 18,
-            height: 18,
-            padding: "0 6px",
-            borderRadius: 999,
-            background: "rgba(255,255,255,0.95)",
-            color: "#111827",
-            fontSize: 12,
-            lineHeight: "18px",
-            fontWeight: 900,
-          }}
-        >
+        <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1.5 rounded-full bg-white/95 text-gray-900 text-xs leading-[18px] font-black">
           {qty}
         </span>
       )}
