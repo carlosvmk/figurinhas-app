@@ -1,4 +1,4 @@
-export type Quantities = Record<string, number>;
+import type { Quantities } from "@/types/album";
 
 export function getMissing(ids: string[], quantities: Quantities): string[] {
   const missing: string[] = [];

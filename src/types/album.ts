@@ -20,3 +20,5 @@ export type AlbumDefinition = {
   name: string;
   sections: AlbumSection[];
 };
+
+export type Quantities = Record<string, number>;

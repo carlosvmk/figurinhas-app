@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-
-type Quantities = Record<string, number>;
+import type { Quantities } from "@/types/album";
 
 function storageKey(albumId: string) {
   return `album:${albumId}:quantities`;
