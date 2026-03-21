@@ -13,9 +13,8 @@ import {
   buildWhatsappMessage,
   type WhatsappMode,
 } from "@/utils/lists";
-import { getAlbumById } from "@/data/albums";
 import { expandAlbum } from "@/utils/album";
-import { loadCustomAlbums } from "@/utils/storage";
+import { loadAlbums } from "@/utils/storage";
 import type { AlbumDefinition } from "@/types/album";
 
 type Tab = "faltam" | "repetidas" | "mensagem";
@@ -34,9 +33,7 @@ export default function ListasPage() {
   const albumId = params?.id ?? "topps-ucl-2025-2026";
 
   const album: AlbumDefinition | undefined = React.useMemo(() => {
-    const found = getAlbumById(albumId);
-    if (found) return found;
-    return loadCustomAlbums().find((a) => a.id === albumId);
+    return loadAlbums().find((a) => a.id === albumId);
   }, [albumId]);
 
   const ids = React.useMemo(() => (album ? expandAlbum(album) : []), [album]);

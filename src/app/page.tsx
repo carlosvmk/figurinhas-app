@@ -3,7 +3,7 @@
 import Link from "next/link";
 import React from "react";
 import useAlbumsCatalog from "@/hooks/useAlbumsCatalog";
-import { downloadBackup, importData, deleteCustomAlbum, type ImportMode } from "@/utils/storage";
+import { downloadBackup, importData, deleteAlbum, type ImportMode } from "@/utils/storage";
 
 type ImportState =
   | { step: "idle" }
@@ -12,8 +12,7 @@ type ImportState =
   | { step: "error"; message: string };
 
 export default function HomePage() {
-  const { albums, customAlbums, refresh } = useAlbumsCatalog();
-  const customIds = React.useMemo(() => new Set(customAlbums.map((a) => a.id)), [customAlbums]);
+  const { albums, refresh } = useAlbumsCatalog();
   const fileRef = React.useRef<HTMLInputElement>(null);
   const [importState, setImportState] = React.useState<ImportState>({ step: "idle" });
   const [deleteTarget, setDeleteTarget] = React.useState<{ id: string; name: string } | null>(null);
@@ -150,7 +149,7 @@ export default function HomePage() {
               </button>
               <button
                 onClick={() => {
-                  deleteCustomAlbum(deleteTarget.id);
+                  deleteAlbum(deleteTarget.id);
                   setDeleteTarget(null);
                   refresh();
                 }}
@@ -169,24 +168,22 @@ export default function HomePage() {
             key={a.id}
             className="relative border border-black/12 rounded-2xl bg-card shadow-card"
           >
-            {customIds.has(a.id) && (
-              <div className="absolute top-2 right-2 flex gap-1">
-                <Link
-                  href={`/albums/new?edit=${a.id}`}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-sm opacity-40 hover:opacity-100 hover:bg-blue-500/10 hover:text-blue-500 no-underline text-inherit transition-all"
-                  title="Editar álbum"
-                >
-                  ✎
-                </Link>
-                <button
-                  onClick={() => setDeleteTarget({ id: a.id, name: a.name })}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-sm opacity-40 hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 cursor-pointer bg-transparent border-none text-inherit transition-all"
-                  title="Deletar álbum"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
+            <div className="absolute top-2 right-2 flex gap-1">
+              <Link
+                href={`/albums/new?edit=${a.id}`}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-sm opacity-40 hover:opacity-100 hover:bg-blue-500/10 hover:text-blue-500 no-underline text-inherit transition-all"
+                title="Editar álbum"
+              >
+                ✎
+              </Link>
+              <button
+                onClick={() => setDeleteTarget({ id: a.id, name: a.name })}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-sm opacity-40 hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 cursor-pointer bg-transparent border-none text-inherit transition-all"
+                title="Deletar álbum"
+              >
+                ✕
+              </button>
+            </div>
             <Link
               href={`/albums/${a.id}`}
               className="no-underline text-inherit p-3.5 block"

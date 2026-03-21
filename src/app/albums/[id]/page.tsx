@@ -5,9 +5,8 @@ import { useParams } from "next/navigation";
 import React from "react";
 import StickerGrid from "@/components/StickerGrid";
 import useAlbumState from "@/hooks/useAlbumState";
-import { getAlbumById } from "@/data/albums";
 import { expandSection } from "@/utils/album";
-import { loadCustomAlbums } from "@/utils/storage";
+import { loadAlbums } from "@/utils/storage";
 import { encodeShareData } from "@/utils/share";
 import type { AlbumDefinition } from "@/types/album";
 
@@ -18,9 +17,7 @@ export default function AlbumPage() {
   const albumId = params?.id ?? "topps-ucl-2025-2026";
 
   const album: AlbumDefinition | undefined = React.useMemo(() => {
-    const found = getAlbumById(albumId);
-    if (found) return found;
-    return loadCustomAlbums().find((a) => a.id === albumId);
+    return loadAlbums().find((a) => a.id === albumId);
   }, [albumId]);
 
   const { quantities, inc, dec, reset } = useAlbumState(albumId);

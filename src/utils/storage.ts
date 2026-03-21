@@ -1,10 +1,42 @@
 import type { AlbumDefinition, Quantities } from "@/types/album";
 import { expandAlbum } from "@/utils/album";
-import { ALBUMS } from "@/data/albums";
+import { ALBUM_TEMPLATES } from "@/data/albums";
 
 const KEY = "figurinhas:albums:custom:v1";
+const INIT_KEY = "figurinhas:initialized:v1";
 const QUANTITIES_PREFIX = "album:";
 const QUANTITIES_SUFFIX = ":quantities";
+
+// ── Inicialização / Migração ──────────────────────────────────────
+
+/**
+ * Na primeira abertura do app, copia os álbuns-modelo para o localStorage.
+ * Preserva quantities já existentes (cenário de migração).
+ * Deve ser chamado antes de qualquer leitura de álbuns.
+ */
+export function initializeAlbums() {
+  if (typeof window === "undefined") return;
+  if (localStorage.getItem(INIT_KEY)) return; // já inicializado
+
+  const existing = loadAlbums();
+  const existingIds = new Set(existing.map((a) => a.id));
+
+  // Adiciona templates que ainda não existem no localStorage
+  const toAdd: AlbumDefinition[] = [];
+  for (const tpl of ALBUM_TEMPLATES) {
+    if (!existingIds.has(tpl.id)) {
+      toAdd.push(tpl);
+    }
+  }
+
+  if (toAdd.length > 0) {
+    saveAlbums([...existing, ...toAdd]);
+  }
+
+  // Quantities já salvas são preservadas (nada a fazer — as chaves album:*:quantities permanecem)
+
+  localStorage.setItem(INIT_KEY, "true");
+}
 
 // ── Export / Import ─────────────────────────────────────────────
 
@@ -17,8 +49,7 @@ export interface BackupData {
 
 function getAllAlbumIds(): string[] {
   const ids = new Set<string>();
-  for (const a of ALBUMS) ids.add(a.id);
-  for (const a of loadCustomAlbums()) ids.add(a.id);
+  for (const a of loadAlbums()) ids.add(a.id);
   // also scan localStorage for any quantity keys
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i)!;
@@ -55,7 +86,7 @@ export function exportData(): BackupData {
     version: 1,
     exportedAt: new Date().toISOString(),
     albums,
-    customAlbums: loadCustomAlbums(),
+    customAlbums: loadAlbums(),
   };
 }
 
@@ -106,15 +137,15 @@ export function importData(raw: string, mode: ImportMode) {
       }
     }
     for (const k of keysToRemove) localStorage.removeItem(k);
-    // replace custom albums
-    saveCustomAlbums(data.customAlbums);
+    // replace albums
+    saveAlbums(data.customAlbums);
   } else {
-    // merge custom albums: file albums take priority
-    const existing = loadCustomAlbums();
+    // merge albums: file albums take priority
+    const existing = loadAlbums();
     const map = new Map<string, AlbumDefinition>();
     for (const a of existing) map.set(a.id, a);
     for (const a of data.customAlbums) map.set(a.id, a);
-    saveCustomAlbums(Array.from(map.values()));
+    saveAlbums(Array.from(map.values()));
   }
 
   // write quantities
@@ -132,7 +163,9 @@ export function importData(raw: string, mode: ImportMode) {
   }
 }
 
-export function loadCustomAlbums(): AlbumDefinition[] {
+// ── CRUD de álbuns (fonte única: localStorage) ────────────────────
+
+export function loadAlbums(): AlbumDefinition[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(KEY);
@@ -144,22 +177,22 @@ export function loadCustomAlbums(): AlbumDefinition[] {
   }
 }
 
-export function saveCustomAlbums(albums: AlbumDefinition[]) {
+export function saveAlbums(albums: AlbumDefinition[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(KEY, JSON.stringify(albums));
 }
 
-export function addCustomAlbum(album: AlbumDefinition) {
-  const existing = loadCustomAlbums();
+export function addAlbum(album: AlbumDefinition) {
+  const existing = loadAlbums();
   // evita id duplicado
   const filtered = existing.filter((a) => a.id !== album.id);
-  saveCustomAlbums([album, ...filtered]);
+  saveAlbums([album, ...filtered]);
 }
 
-export function updateCustomAlbum(album: AlbumDefinition) {
-  const existing = loadCustomAlbums();
+export function updateAlbum(album: AlbumDefinition) {
+  const existing = loadAlbums();
   const updated = existing.map((a) => (a.id === album.id ? album : a));
-  saveCustomAlbums(updated);
+  saveAlbums(updated);
 
   // remove quantities for sticker IDs that no longer exist
   const validIds = new Set(expandAlbum(album));
@@ -172,9 +205,16 @@ export function updateCustomAlbum(album: AlbumDefinition) {
   localStorage.setItem(key, JSON.stringify(cleaned));
 }
 
-export function deleteCustomAlbum(id: string) {
-  const existing = loadCustomAlbums();
-  saveCustomAlbums(existing.filter((a) => a.id !== id));
+export function deleteAlbum(id: string) {
+  const existing = loadAlbums();
+  saveAlbums(existing.filter((a) => a.id !== id));
   // remove quantidades para não deixar lixo
   localStorage.removeItem(`${QUANTITIES_PREFIX}${id}${QUANTITIES_SUFFIX}`);
 }
+
+// ── Aliases de compatibilidade (usados pelo backup) ───────────────
+export const loadCustomAlbums = loadAlbums;
+export const saveCustomAlbums = saveAlbums;
+export const addCustomAlbum = addAlbum;
+export const updateCustomAlbum = updateAlbum;
+export const deleteCustomAlbum = deleteAlbum;

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import React, { Suspense } from "react";
 import type { AlbumDefinition, AlbumSection } from "@/types/album";
-import { addCustomAlbum, loadCustomAlbums, updateCustomAlbum } from "@/utils/storage";
+import { addAlbum, loadAlbums, updateAlbum } from "@/utils/storage";
+import { ALBUM_TEMPLATES } from "@/data/albums";
 
 export default function NewAlbumPage() {
   return (
@@ -36,7 +37,7 @@ function NewAlbumForm() {
 
   const editAlbum = React.useMemo(() => {
     if (!editId) return null;
-    return loadCustomAlbums().find((a) => a.id === editId) ?? null;
+    return loadAlbums().find((a) => a.id === editId) ?? null;
   }, [editId]);
 
   const isEditing = !!editAlbum;
@@ -57,6 +58,13 @@ function NewAlbumForm() {
     if (!isEditing && !id) setId(slugify(name));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name]);
+
+  const applyTemplate = (tpl: AlbumDefinition) => {
+    setName(tpl.name);
+    setId(slugify(tpl.name));
+    setSections(tpl.sections.map((s) => ({ ...s })));
+    setMsg(null);
+  };
 
   const addSection = (type: "numericRange" | "prefixedRange") => {
     const nextIndex = sections.length + 1;
@@ -145,10 +153,10 @@ function NewAlbumForm() {
     };
 
     if (isEditing) {
-      updateCustomAlbum(album);
+      updateAlbum(album);
       router.push("/");
     } else {
-      addCustomAlbum(album);
+      addAlbum(album);
       setMsg("✅ Álbum salvo! Ele já aparece na tela inicial.");
     }
   };
@@ -178,6 +186,24 @@ function NewAlbumForm() {
       {msg && (
         <div className="mb-3 px-3 py-2.5 rounded-xl border border-border-default bg-black/[0.04] font-extrabold">
           {msg}
+        </div>
+      )}
+
+      {/* Modelos pré-prontos (apenas no modo criação) */}
+      {!isEditing && (
+        <div className="mb-3.5 border border-black/12 rounded-2xl p-3.5 bg-card shadow-card">
+          <div className="font-[950] mb-2">Começar de um modelo</div>
+          <div className="flex gap-2 flex-wrap">
+            {ALBUM_TEMPLATES.map((tpl) => (
+              <button
+                key={tpl.id}
+                onClick={() => applyTemplate(tpl)}
+                className="px-3.5 py-2.5 rounded-xl border border-border-default font-bold cursor-pointer bg-transparent text-inherit hover:bg-black/[0.04] transition-colors"
+              >
+                {tpl.name}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

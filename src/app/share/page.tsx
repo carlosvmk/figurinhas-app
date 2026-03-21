@@ -4,8 +4,7 @@ import React from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { decodeShareData, type SharedData } from "@/utils/share";
-import { getAlbumById } from "@/data/albums";
-import { loadCustomAlbums } from "@/utils/storage";
+import { loadAlbums } from "@/utils/storage";
 import { expandSection } from "@/utils/album";
 import StickerCellReadonly from "@/components/StickerCellReadonly";
 import type { AlbumDefinition } from "@/types/album";
@@ -70,9 +69,7 @@ function ShareView({ data }: { data: SharedData }) {
 
   // Try to find album definition for sections
   const album: AlbumDefinition | undefined = React.useMemo(() => {
-    const found = getAlbumById(albumId);
-    if (found) return found;
-    return loadCustomAlbums().find((a) => a.id === albumId);
+    return loadAlbums().find((a) => a.id === albumId);
   }, [albumId]);
 
   // Build sticker IDs from album sections or from quantities keys

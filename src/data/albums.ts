@@ -1,6 +1,7 @@
 import type { AlbumDefinition } from "@/types/album";
 
-export const ALBUMS: AlbumDefinition[] = [
+/** Modelos pré-prontos — usados apenas para inicialização e como templates na tela de criação. */
+export const ALBUM_TEMPLATES: AlbumDefinition[] = [
   {
     id: "topps-ucl-2025-2026",
     name: "TOPPS UCL 2025/26",
@@ -17,7 +18,3 @@ export const ALBUMS: AlbumDefinition[] = [
     ],
   },
 ];
-
-export function getAlbumById(id: string): AlbumDefinition | undefined {
-  return ALBUMS.find((a) => a.id === id);
-}
