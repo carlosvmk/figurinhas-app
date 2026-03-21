@@ -170,13 +170,22 @@ export default function HomePage() {
             className="relative border border-black/12 rounded-2xl bg-card shadow-card"
           >
             {customIds.has(a.id) && (
-              <button
-                onClick={() => setDeleteTarget({ id: a.id, name: a.name })}
-                className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-lg text-sm opacity-40 hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 cursor-pointer bg-transparent border-none text-inherit transition-all"
-                title="Deletar álbum"
-              >
-                ✕
-              </button>
+              <div className="absolute top-2 right-2 flex gap-1">
+                <Link
+                  href={`/albums/new?edit=${a.id}`}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-sm opacity-40 hover:opacity-100 hover:bg-blue-500/10 hover:text-blue-500 no-underline text-inherit transition-all"
+                  title="Editar álbum"
+                >
+                  ✎
+                </Link>
+                <button
+                  onClick={() => setDeleteTarget({ id: a.id, name: a.name })}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-sm opacity-40 hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 cursor-pointer bg-transparent border-none text-inherit transition-all"
+                  title="Deletar álbum"
+                >
+                  ✕
+                </button>
+              </div>
             )}
             <Link
               href={`/albums/${a.id}`}

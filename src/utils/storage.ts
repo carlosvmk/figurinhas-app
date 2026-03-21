@@ -1,4 +1,5 @@
 import type { AlbumDefinition, Quantities } from "@/types/album";
+import { expandAlbum } from "@/utils/album";
 import { ALBUMS } from "@/data/albums";
 
 const KEY = "figurinhas:albums:custom:v1";
@@ -153,6 +154,22 @@ export function addCustomAlbum(album: AlbumDefinition) {
   // evita id duplicado
   const filtered = existing.filter((a) => a.id !== album.id);
   saveCustomAlbums([album, ...filtered]);
+}
+
+export function updateCustomAlbum(album: AlbumDefinition) {
+  const existing = loadCustomAlbums();
+  const updated = existing.map((a) => (a.id === album.id ? album : a));
+  saveCustomAlbums(updated);
+
+  // remove quantities for sticker IDs that no longer exist
+  const validIds = new Set(expandAlbum(album));
+  const key = `${QUANTITIES_PREFIX}${album.id}${QUANTITIES_SUFFIX}`;
+  const quantities = loadQuantities(album.id);
+  const cleaned: Quantities = {};
+  for (const [stickerId, qty] of Object.entries(quantities)) {
+    if (validIds.has(stickerId)) cleaned[stickerId] = qty;
+  }
+  localStorage.setItem(key, JSON.stringify(cleaned));
 }
 
 export function deleteCustomAlbum(id: string) {

@@ -1,9 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import React from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import React, { Suspense } from "react";
 import type { AlbumDefinition, AlbumSection } from "@/types/album";
-import { addCustomAlbum } from "@/utils/storage";
+import { addCustomAlbum, loadCustomAlbums, updateCustomAlbum } from "@/utils/storage";
+
+export default function NewAlbumPage() {
+  return (
+    <Suspense>
+      <NewAlbumForm />
+    </Suspense>
+  );
+}
 
 function slugify(s: string) {
   return s
@@ -20,19 +29,32 @@ function isPositiveInt(n: unknown) {
   return Number.isInteger(x) && x > 0;
 }
 
-export default function NewAlbumPage() {
-  const [name, setName] = React.useState("");
-  const [id, setId] = React.useState("");
+function NewAlbumForm() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const editId = searchParams.get("edit");
 
-  const [sections, setSections] = React.useState<AlbumSection[]>([
-    { id: "base", label: "Normais", type: "numericRange", start: 1, end: 574 },
-  ]);
+  const editAlbum = React.useMemo(() => {
+    if (!editId) return null;
+    return loadCustomAlbums().find((a) => a.id === editId) ?? null;
+  }, [editId]);
+
+  const isEditing = !!editAlbum;
+
+  const [name, setName] = React.useState(editAlbum?.name ?? "");
+  const [id, setId] = React.useState(editAlbum?.id ?? "");
+
+  const [sections, setSections] = React.useState<AlbumSection[]>(
+    editAlbum?.sections ?? [
+      { id: "base", label: "Normais", type: "numericRange", start: 1, end: 574 },
+    ]
+  );
 
   const [msg, setMsg] = React.useState<string | null>(null);
 
-  // id sugerido a partir do nome
+  // id sugerido a partir do nome (apenas no modo criação)
   React.useEffect(() => {
-    if (!id) setId(slugify(name));
+    if (!isEditing && !id) setId(slugify(name));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name]);
 
@@ -56,6 +78,16 @@ export default function NewAlbumPage() {
     setSections((prev) =>
       prev.map((s) => (s.id === secId ? ({ ...s, ...patch } as AlbumSection) : s))
     );
+  };
+
+  const moveSection = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= sections.length) return;
+    setSections((prev) => {
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
   };
 
   const validate = (): string | null => {
@@ -112,8 +144,13 @@ export default function NewAlbumPage() {
       }),
     };
 
-    addCustomAlbum(album);
-    setMsg("✅ Álbum salvo! Ele já aparece na tela inicial.");
+    if (isEditing) {
+      updateCustomAlbum(album);
+      router.push("/");
+    } else {
+      addCustomAlbum(album);
+      setMsg("✅ Álbum salvo! Ele já aparece na tela inicial.");
+    }
   };
 
   return (
@@ -126,7 +163,7 @@ export default function NewAlbumPage() {
           ← Voltar
         </Link>
 
-        <div className="text-lg font-[950]">Criar álbum</div>
+        <div className="text-lg font-[950]">{isEditing ? "Editar álbum" : "Criar álbum"}</div>
 
         <div className="ml-auto">
           <button
@@ -156,13 +193,17 @@ export default function NewAlbumPage() {
         <label className="font-black">ID (slug)</label>
         <input
           value={id}
+          disabled={isEditing}
           onChange={(e) => setId(e.target.value)}
           placeholder="ex.: brasileirao-2025"
-          className="px-3 py-2.5 rounded-xl border border-border-default"
+          className="px-3 py-2.5 rounded-xl border border-border-default disabled:opacity-50 disabled:cursor-not-allowed"
         />
 
         <div className="opacity-75 font-bold">
-          Dica: o ID vira a URL: <span className="font-mono">/album/{id || "..."}</span>
+          {isEditing
+            ? "O ID não pode ser alterado para manter os dados existentes."
+            : <>Dica: o ID vira a URL: <span className="font-mono">/album/{id || "..."}</span></>
+          }
         </div>
       </div>
 
@@ -182,7 +223,7 @@ export default function NewAlbumPage() {
       </div>
 
       <div className="flex flex-col gap-3">
-        {sections.map((s) => (
+        {sections.map((s, i) => (
           <div
             key={s.id}
             className="border border-black/12 rounded-2xl p-3.5 bg-card shadow-card"
@@ -192,14 +233,32 @@ export default function NewAlbumPage() {
                 {s.type === "numericRange" ? "Seção numérica" : "Seção prefixada"}
               </div>
 
-              <button
-                onClick={() => removeSection(s.id)}
-                className="ml-auto px-2.5 py-2 rounded-xl border border-border-default bg-red-600/10 font-black cursor-pointer"
-                disabled={sections.length <= 1}
-                title={sections.length <= 1 ? "Mantenha ao menos uma seção" : "Remover seção"}
-              >
-                Remover
-              </button>
+              <div className="ml-auto flex gap-1.5">
+                <button
+                  onClick={() => moveSection(i, -1)}
+                  disabled={i === 0}
+                  className="px-2 py-1.5 rounded-lg border border-border-default font-black cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed bg-transparent text-inherit"
+                  title="Mover para cima"
+                >
+                  ↑
+                </button>
+                <button
+                  onClick={() => moveSection(i, 1)}
+                  disabled={i === sections.length - 1}
+                  className="px-2 py-1.5 rounded-lg border border-border-default font-black cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed bg-transparent text-inherit"
+                  title="Mover para baixo"
+                >
+                  ↓
+                </button>
+                <button
+                  onClick={() => removeSection(s.id)}
+                  className="px-2.5 py-2 rounded-xl border border-border-default bg-red-600/10 font-black cursor-pointer"
+                  disabled={sections.length <= 1}
+                  title={sections.length <= 1 ? "Mantenha ao menos uma seção" : "Remover seção"}
+                >
+                  Remover
+                </button>
+              </div>
             </div>
 
             <div className="grid gap-2.5 grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
