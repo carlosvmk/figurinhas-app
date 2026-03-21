@@ -11,10 +11,25 @@ export const ALBUM_TEMPLATES: AlbumDefinition[] = [
   },
   {
     id: "one-piece-1",
-    name: "One Piece (1–177 + F1–F27)",
+    name: "Panini One Piece",
     sections: [
       { id: "base", label: "Normais", type: "numericRange", start: 1, end: 177 },
       { id: "foil", label: "Foils", type: "prefixedRange", prefix: "F", start: 1, end: 27 },
+    ],
+  },
+  {
+    id: "topps-premier-league-2026",
+    name: "Topps Premier League 2026",
+    sections: [
+      { id: "base", label: "Principal", type: "numericRange", start: 1, end: 561 },
+    ],
+  },
+  {
+    id: "panini-naruto",
+    name: "Panini Naruto",
+    sections: [
+      { id: "base", label: "Principal", type: "numericRange", start: 1, end: 169 },
+      { id: "especiais", label: "Especiais", type: "prefixedRange", prefix: "X", start: 1, end: 6 },
     ],
   },
 ];
