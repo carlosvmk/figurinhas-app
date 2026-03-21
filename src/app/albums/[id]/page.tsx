@@ -10,8 +10,7 @@ import { expandSection } from "@/utils/album";
 import { loadCustomAlbums } from "@/utils/storage";
 import type { AlbumDefinition } from "@/types/album";
 
-type Mode = "add" | "remove";
-type FilterMode = "all" | "missing" | "dups";
+const ONBOARDING_KEY = "figurinhas:onboarding:grid:v1";
 
 export default function AlbumPage() {
   const params = useParams<{ id: string }>();
@@ -25,13 +24,41 @@ export default function AlbumPage() {
 
   const { quantities, inc, dec, reset } = useAlbumState(albumId);
 
-  const [mode, setMode] = React.useState<Mode>("add");
-  const [filter, setFilter] = React.useState<FilterMode>("all");
+  const [filterMissing, setFilterMissing] = React.useState(false);
+  const [showOnboarding, setShowOnboarding] = React.useState(false);
 
-  const [query, setQuery] = React.useState("");
-  const [highlightId, setHighlightId] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!localStorage.getItem(ONBOARDING_KEY)) {
+      setShowOnboarding(true);
+      const timer = setTimeout(() => {
+        setShowOnboarding(false);
+        localStorage.setItem(ONBOARDING_KEY, "1");
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
-  // Contadores considerando todas as seções
+  const dismissOnboarding = () => {
+    setShowOnboarding(false);
+    localStorage.setItem(ONBOARDING_KEY, "1");
+  };
+
+  const handleInc = (id: string) => {
+    dismissOnboarding();
+    inc(id);
+  };
+
+  const handleDec = (id: string) => {
+    const qty = quantities[id] ?? 0;
+    if (qty === 0) {
+      try { navigator.vibrate([10, 10, 10]); } catch {}
+      return;
+    }
+    try { navigator.vibrate(30); } catch {}
+    dec(id);
+  };
+
+  // Contadores
   const allIds = React.useMemo(() => album?.sections.flatMap(expandSection) ?? [], [album]);
   const completas = React.useMemo(
     () => allIds.filter((id) => (quantities[id] ?? 0) >= 1).length,
@@ -41,42 +68,15 @@ export default function AlbumPage() {
   const faltam = total - completas;
   const percent = total === 0 ? 0 : Math.round((completas / total) * 1000) / 10;
   const repetidasTipos = React.useMemo(
-    () => allIds.filter((id) => (quantities[id] ?? 0) >= 2).length,
+    () => allIds.reduce((sum, id) => {
+      const q = quantities[id] ?? 0;
+      return q >= 2 ? sum + (q - 1) : sum;
+    }, 0),
     [allIds, quantities]
   );
 
   const onReset = () => {
     if (confirm("Tem certeza que deseja zerar o álbum neste dispositivo?")) reset();
-  };
-
-  const toggleMode = () => {
-    setMode((m) => (m === "add" ? "remove" : "add"));
-  };
-
-  const act = (id: string) => {
-    if (mode === "add") inc(id);
-    else dec(id);
-  };
-
-  const setFilterWithAutoMode = (next: FilterMode) => {
-    setFilter(next);
-    if (next === "missing") setMode("add");
-    if (next === "dups") setMode("remove");
-  };
-
-  const goTo = (raw: string) => {
-    const v = String(raw).trim().toUpperCase();
-    if (!v) return;
-
-    // aceita "143" e também "F12" etc.
-    const normalized = v;
-
-    const el = document.getElementById(`sticker-${normalized}`);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
-      setHighlightId(normalized);
-      window.setTimeout(() => setHighlightId(null), 1500);
-    }
   };
 
   if (!album) {
@@ -102,20 +102,22 @@ export default function AlbumPage() {
 
         <div className="ml-auto flex gap-2">
           <button
-            onClick={toggleMode}
+            onClick={() => setFilterMissing((v) => !v)}
             className={[
-              "px-3 py-2 rounded-[10px] border border-border-default font-black text-white",
-              mode === "add" ? "bg-mode-add" : "bg-mode-remove",
+              "px-3 py-2 rounded-[10px] border font-bold text-sm transition-colors",
+              filterMissing
+                ? "bg-foreground text-background border-foreground"
+                : "border-border-default opacity-70",
             ].join(" ")}
           >
-            Modo: {mode === "add" ? "Adicionar" : "Remover"}
+            Faltam
           </button>
 
           <Link
             href={`/albums/${album.id}/listas`}
             className="px-3 py-2 rounded-[10px] border border-border-default no-underline font-extrabold"
           >
-            Listas (troca)
+            Listas
           </Link>
 
           <button onClick={onReset} className="px-3 py-2 rounded-[10px]">
@@ -134,58 +136,10 @@ export default function AlbumPage() {
             Faltam: <b>{faltam}</b>
           </span>
           <span className="opacity-85">
-            Repetidas (tipos): <b>{repetidasTipos}</b>
-          </span>
-          <span className="opacity-85">
-            Clique para <b>{mode === "add" ? "+1" : "−1"}</b>
+            Repetidas: <b>{repetidasTipos}</b>
           </span>
         </div>
 
-        <div
-          className="w-full h-3 rounded-full bg-black/10 overflow-hidden border border-black/12"
-          aria-label={`Progresso: ${percent}%`}
-        >
-          <div
-            className="h-full bg-black/55"
-            style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Busca */}
-      <div className="flex gap-2 items-center mb-3 flex-wrap">
-        <label className="font-bold opacity-85">Ir para:</label>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") goTo(query);
-          }}
-          placeholder="ex: 143 ou F12"
-          className="w-40 px-2.5 py-2 rounded-[10px] border border-black/20"
-        />
-        <button
-          onClick={() => goTo(query)}
-          className="px-3 py-2 rounded-[10px] border border-border-default font-extrabold"
-        >
-          Ir
-        </button>
-      </div>
-
-      {/* Filtro + auto-modo */}
-      <div className="flex gap-2 mb-3 flex-wrap">
-        {(["all", "missing", "dups"] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilterWithAutoMode(f)}
-            className={[
-              "px-3 py-2 rounded-[10px] border border-border-default",
-              filter === f ? "font-black opacity-100" : "font-bold opacity-75",
-            ].join(" ")}
-          >
-            {f === "all" ? "Todas" : f === "missing" ? "Só faltantes (auto +)" : "Só repetidas (auto −)"}
-          </button>
-        ))}
       </div>
 
       {/* Render por seção */}
@@ -201,14 +155,24 @@ export default function AlbumPage() {
               <StickerGrid
                 ids={ids}
                 quantities={quantities}
-                onAct={act}
-                highlightId={highlightId ?? undefined}
-                filter={filter}
+                onInc={handleInc}
+                onDec={handleDec}
+                filterMissing={filterMissing}
               />
             </section>
           );
         })}
       </div>
+
+      {/* Onboarding */}
+      {showOnboarding && (
+        <div
+          onClick={dismissOnboarding}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-full bg-foreground/90 text-background text-sm font-medium shadow-lg backdrop-blur-sm animate-fade-in"
+        >
+          Toque para adicionar · Segure para remover
+        </div>
+      )}
     </main>
   );
 }
