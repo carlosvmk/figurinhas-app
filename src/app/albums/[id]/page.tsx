@@ -8,6 +8,7 @@ import useAlbumState from "@/hooks/useAlbumState";
 import { getAlbumById } from "@/data/albums";
 import { expandSection } from "@/utils/album";
 import { loadCustomAlbums } from "@/utils/storage";
+import { encodeShareData } from "@/utils/share";
 import type { AlbumDefinition } from "@/types/album";
 
 const ONBOARDING_KEY = "figurinhas:onboarding:grid:v1";
@@ -26,6 +27,43 @@ export default function AlbumPage() {
 
   const [filterMissing, setFilterMissing] = React.useState(false);
   const [showOnboarding, setShowOnboarding] = React.useState(false);
+  const [shareUrl, setShareUrl] = React.useState<string | null>(null);
+  const [copyFeedback, setCopyFeedback] = React.useState<string | null>(null);
+  const shareLinkRef = React.useRef<HTMLInputElement>(null);
+
+  const handleShare = () => {
+    if (!album) return;
+    const encoded = encodeShareData({
+      albumId: album.id,
+      albumName: album.name,
+      quantities,
+      sharedAt: new Date().toISOString(),
+    });
+    const url = `${window.location.origin}/share?d=${encoded}`;
+    setShareUrl(url);
+    setCopyFeedback(null);
+  };
+
+  const handleCopy = () => {
+    if (!shareUrl) return;
+    // clipboard must be called synchronously inside click handler for iOS Safari
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(
+        () => {
+          setCopyFeedback("Copiado!");
+          setTimeout(() => setCopyFeedback(null), 2000);
+        },
+        () => {
+          // clipboard failed (iOS restriction) — select text as fallback
+          shareLinkRef.current?.select();
+          setCopyFeedback("Selecione e copie");
+        }
+      );
+    } else {
+      shareLinkRef.current?.select();
+      setCopyFeedback("Selecione e copie");
+    }
+  };
 
   React.useEffect(() => {
     if (!localStorage.getItem(ONBOARDING_KEY)) {
@@ -102,6 +140,13 @@ export default function AlbumPage() {
 
         <div className="ml-auto flex gap-2">
           <button
+            onClick={handleShare}
+            className="px-3 py-2 rounded-[10px] border border-border-default font-bold text-sm opacity-70 transition-colors"
+          >
+            Compartilhar
+          </button>
+
+          <button
             onClick={() => setFilterMissing((v) => !v)}
             className={[
               "px-3 py-2 rounded-[10px] border font-bold text-sm transition-colors",
@@ -163,6 +208,40 @@ export default function AlbumPage() {
           );
         })}
       </div>
+
+      {/* Modal de compartilhamento */}
+      {shareUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-background rounded-2xl p-5 mx-4 max-w-md w-full shadow-xl">
+            <p className="font-bold mb-2 text-sm">Link do álbum:</p>
+            <div className="flex gap-2 items-center">
+              <input
+                ref={shareLinkRef}
+                type="text"
+                readOnly
+                value={shareUrl}
+                className="flex-1 min-w-0 p-2.5 rounded-lg border border-border-default text-sm font-mono bg-foreground/5 cursor-default outline-none select-all"
+                onFocus={(e) => e.target.select()}
+              />
+              <button
+                onClick={handleCopy}
+                className="px-4 py-2.5 rounded-lg bg-foreground text-background font-bold text-sm whitespace-nowrap shrink-0"
+              >
+                {copyFeedback === "Copiado!" ? "Copiado!" : "Copiar"}
+              </button>
+            </div>
+            {copyFeedback === "Selecione e copie" && (
+              <p className="mt-2 text-xs opacity-60">Selecione e copie</p>
+            )}
+            <button
+              onClick={() => { setShareUrl(null); setCopyFeedback(null); }}
+              className="mt-3 w-full py-2 rounded-lg border border-border-default font-bold text-sm opacity-70"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Onboarding */}
       {showOnboarding && (
