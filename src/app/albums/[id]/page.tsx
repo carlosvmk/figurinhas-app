@@ -7,6 +7,7 @@ import StickerGrid from "@/components/StickerGrid";
 import useAlbumState from "@/hooks/useAlbumState";
 import { getAlbumById } from "@/data/albums";
 import { expandSection } from "@/utils/album";
+import { loadCustomAlbums } from "@/utils/storage";
 import type { AlbumDefinition } from "@/types/album";
 
 type Mode = "add" | "remove";
@@ -16,11 +17,13 @@ export default function AlbumPage() {
   const params = useParams<{ id: string }>();
   const albumId = params?.id ?? "topps-ucl-2025-2026";
 
-  const album: AlbumDefinition =
-    getAlbumById(albumId) ??
-    getAlbumById("topps-ucl-2025-2026")!;
+  const album: AlbumDefinition | undefined = React.useMemo(() => {
+    const found = getAlbumById(albumId);
+    if (found) return found;
+    return loadCustomAlbums().find((a) => a.id === albumId);
+  }, [albumId]);
 
-  const { quantities, inc, dec, reset } = useAlbumState(album.id);
+  const { quantities, inc, dec, reset } = useAlbumState(albumId);
 
   const [mode, setMode] = React.useState<Mode>("add");
   const [filter, setFilter] = React.useState<FilterMode>("all");
@@ -29,7 +32,7 @@ export default function AlbumPage() {
   const [highlightId, setHighlightId] = React.useState<string | null>(null);
 
   // Contadores considerando todas as seções
-  const allIds = React.useMemo(() => album.sections.flatMap(expandSection), [album]);
+  const allIds = React.useMemo(() => album?.sections.flatMap(expandSection) ?? [], [album]);
   const completas = React.useMemo(
     () => allIds.filter((id) => (quantities[id] ?? 0) >= 1).length,
     [allIds, quantities]
@@ -76,6 +79,15 @@ export default function AlbumPage() {
     }
   };
 
+  if (!album) {
+    return (
+      <main style={{ padding: 16, maxWidth: 980, margin: "0 auto" }}>
+        <Link href="/" style={{ textDecoration: "none", fontWeight: 700 }}>← Álbuns</Link>
+        <p style={{ marginTop: 16 }}>Álbum não encontrado.</p>
+      </main>
+    );
+  }
+
   return (
     <main style={{ padding: 16, maxWidth: 980, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
@@ -110,7 +122,7 @@ export default function AlbumPage() {
           </button>
 
           <Link
-            href={`/album/${album.id}/listas`}
+            href={`/albums/${album.id}/listas`}
             style={{
               padding: "8px 12px",
               borderRadius: 10,

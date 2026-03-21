@@ -14,14 +14,8 @@ import {
 } from "@/utils/lists";
 import { getAlbumById } from "@/data/albums";
 import { expandAlbum } from "@/utils/album";
-
-
-const ALBUM = {
-  id: "topps-ucl-2025-2026",
-  name: "TOPPS UCL 2025/26",
-  start: 1,
-  end: 574,
-};
+import { loadCustomAlbums } from "@/utils/storage";
+import type { AlbumDefinition } from "@/types/album";
 
 
 type Tab = "faltam" | "repetidas" | "mensagem";
@@ -100,10 +94,15 @@ const styles = {
 
 export default function ListasPage() {
   const params = useParams<{ id: string }>();
-  const albumId = params?.id || ALBUM.id;
+  const albumId = params?.id ?? "topps-ucl-2025-2026";
 
-  const album = getAlbumById(albumId) ?? getAlbumById("topps-ucl-2025-2026")!;
-  const ids = React.useMemo(() => expandAlbum(album), [album]);
+  const album: AlbumDefinition | undefined = React.useMemo(() => {
+    const found = getAlbumById(albumId);
+    if (found) return found;
+    return loadCustomAlbums().find((a) => a.id === albumId);
+  }, [albumId]);
+
+  const ids = React.useMemo(() => (album ? expandAlbum(album) : []), [album]);
 
 
   const { quantities } = useAlbumState(albumId);
@@ -132,7 +131,7 @@ export default function ListasPage() {
   }, [repetidasRaw, wrap]);
 
   const whatsappText = React.useMemo(
-    () => buildWhatsappMessage({ albumName: ALBUM.name, missing, dups, withQty }),
+    () => buildWhatsappMessage({ albumName: album?.name ?? "Álbum", missing, dups, withQty }),
     [missing, dups, withQty]
   );
 
@@ -149,10 +148,19 @@ export default function ListasPage() {
       ? `Repetidas (tipos): ${dups.length}`
       : "Mensagem pronta para grupo";
 
+  if (!album) {
+    return (
+      <main style={styles.page}>
+        <Link href="/" style={{ textDecoration: "none", fontWeight: 700 }}>← Álbuns</Link>
+        <p style={{ marginTop: 16 }}>Álbum não encontrado.</p>
+      </main>
+    );
+  }
+
   return (
     <main style={styles.page}>
       <div style={styles.topRow}>
-        <Link href={`/album/${albumId}`} style={{ ...styles.btnSoft, textDecoration: "none", display: "inline-block" }}>
+        <Link href={`/albums/${albumId}`} style={{ ...styles.btnSoft, textDecoration: "none", display: "inline-block" }}>
           ← Voltar
         </Link>
 
@@ -164,7 +172,7 @@ export default function ListasPage() {
       </div>
 
       <div style={{ marginBottom: 12, opacity: 0.85 }}>
-        <b>{ALBUM.name}</b> • {subtitle}
+        <b>{album?.name ?? "Álbum não encontrado"}</b> • {subtitle}
       </div>
 
       {/* Tabs */}
