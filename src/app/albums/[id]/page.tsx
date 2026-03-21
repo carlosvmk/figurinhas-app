@@ -140,7 +140,7 @@ export default function AlbumPage() {
             onClick={handleShare}
             className="px-3 py-2 rounded-[10px] border border-border-default font-bold text-sm opacity-70 transition-colors"
           >
-            Compartilhar
+            Compartilhar Álbum
           </button>
 
           <Link
@@ -166,7 +166,7 @@ export default function AlbumPage() {
             href={`/albums/${album.id}/listas`}
             className="px-3 py-2 rounded-[10px] border border-border-default no-underline font-extrabold"
           >
-            Listas
+            Compartilhar Lista
           </Link>
 
           <button onClick={onReset} className="px-3 py-2 rounded-[10px]">

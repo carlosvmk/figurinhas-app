@@ -56,13 +56,13 @@ export default function HomePage() {
             onClick={downloadBackup}
             className="px-3.5 py-2.5 rounded-xl border border-border-default font-bold cursor-pointer bg-transparent text-inherit"
           >
-            Exportar dados
+            Exportar
           </button>
           <button
             onClick={() => fileRef.current?.click()}
             className="px-3.5 py-2.5 rounded-xl border border-border-default font-bold cursor-pointer bg-transparent text-inherit"
           >
-            Importar dados
+            Importar
           </button>
           <input
             ref={fileRef}

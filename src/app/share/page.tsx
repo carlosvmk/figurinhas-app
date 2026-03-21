@@ -47,7 +47,7 @@ function SharePageInner() {
           href="/"
           className="px-4 py-2.5 rounded-[10px] bg-foreground text-background font-bold no-underline inline-block"
         >
-          Abrir meu álbum
+          Abrir meus álbuns
         </Link>
       </main>
     );
@@ -163,7 +163,7 @@ function ShareView({ data }: { data: SharedData }) {
         )}
       </div>
 
-      {/* Listas colapsáveis */}
+      {/* Listas colapsáveis (faltantes/repetidas) */}
       {missingIds.length > 0 && (
         <div className="mb-3">
           <button
@@ -205,7 +205,7 @@ function ShareView({ data }: { data: SharedData }) {
           href="/"
           className="px-4 py-2.5 rounded-[10px] bg-foreground text-background font-bold no-underline inline-block"
         >
-          Abrir meu álbum
+          Abrir meus álbuns
         </Link>
       </div>
     </main>

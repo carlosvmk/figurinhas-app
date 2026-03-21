@@ -428,7 +428,7 @@ function ComparePage() {
                   )}
               </section>
 
-              {/* WhatsApp button */}
+              {/* Copiar resultado */}
               {(result.iCanGive.length > 0 || result.theyCanGive.length > 0) && (
                 <button
                   onClick={handleCopy}
@@ -436,7 +436,7 @@ function ComparePage() {
                 >
                   {copyFeedback === "Copiado!"
                     ? "✅ Copiado!"
-                    : "📋 Copiar para WhatsApp"}
+                    : "📋 Copiar"}
                 </button>
               )}
             </div>
