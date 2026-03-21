@@ -135,13 +135,20 @@ export default function AlbumPage() {
 
         <div className="text-lg font-black">{album.name}</div>
 
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex flex-wrap gap-2">
           <button
             onClick={handleShare}
             className="px-3 py-2 rounded-[10px] border border-border-default font-bold text-sm opacity-70 transition-colors"
           >
             Compartilhar
           </button>
+
+          <Link
+            href={`/compare?albumId=${album.id}`}
+            className="px-3 py-2 rounded-[10px] border border-border-default no-underline font-bold text-sm opacity-70 transition-colors"
+          >
+            Comparar
+          </Link>
 
           <button
             onClick={() => setFilterMissing((v) => !v)}

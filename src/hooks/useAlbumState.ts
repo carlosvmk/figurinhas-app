@@ -1,64 +1,65 @@
 "use client";
 
-import React from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { Quantities } from "@/types/album";
 
 function storageKey(albumId: string) {
   return `album:${albumId}:quantities`;
 }
 
-function safeParse(value: string | null): unknown {
-  if (!value) return {};
+function loadFromStorage(albumId: string): Quantities {
+  if (typeof window === "undefined") return {};
   try {
-    return JSON.parse(value);
+    const raw = window.localStorage.getItem(storageKey(albumId));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return {};
+    const out: Quantities = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      const id = String(k).trim();
+      if (!id) continue;
+      const n = typeof v === "number" ? v : Number(v);
+      if (!Number.isFinite(n)) continue;
+      const qty = Math.max(0, Math.min(99, Math.floor(n)));
+      if (qty > 0) out[id] = qty;
+    }
+    return out;
   } catch {
     return {};
   }
 }
 
-function sanitizeQuantities(input: unknown): Quantities {
-  if (!input || typeof input !== "object") return {};
-  const obj = input as Record<string, unknown>;
-  const out: Quantities = {};
-
-  for (const [k, v] of Object.entries(obj)) {
-    const id = String(k).trim();
-    if (!id) continue;
-
-    const n = typeof v === "number" ? v : Number(v);
-    if (!Number.isFinite(n)) continue;
-
-    const qty = Math.max(0, Math.min(99, Math.floor(n)));
-    if (qty > 0) out[id] = qty;
-  }
-  return out;
-}
-
 export default function useAlbumState(albumId: string) {
-  const [quantities, setQuantities] = React.useState<Quantities>({});
+  const albumIdRef = useRef(albumId);
 
-  // Carrega do localStorage ao montar (client-side)
-  React.useEffect(() => {
-    const key = storageKey(albumId);
-    const raw = window.localStorage.getItem(key);
-    const parsed = safeParse(raw);
-    setQuantities(sanitizeQuantities(parsed));
+  const [quantities, setQuantities] = useState<Quantities>(() =>
+    loadFromStorage(albumId)
+  );
+
+  // Quando albumId muda, recarrega do localStorage
+  useEffect(() => {
+    if (albumIdRef.current !== albumId) {
+      albumIdRef.current = albumId;
+      setQuantities(loadFromStorage(albumId));
+    }
   }, [albumId]);
 
-  // Salva automaticamente
-  React.useEffect(() => {
-    const key = storageKey(albumId);
-    window.localStorage.setItem(key, JSON.stringify(quantities));
-  }, [albumId, quantities]);
+  // Salva no localStorage sempre que quantities muda
+  useEffect(() => {
+    window.localStorage.setItem(
+      storageKey(albumIdRef.current),
+      JSON.stringify(quantities)
+    );
+  }, [quantities]);
 
-  const inc = React.useCallback((id: string) => {
+  const inc = useCallback((id: string) => {
     setQuantities((prev) => ({
       ...prev,
-      [id]: (prev[id] ?? 0) + 1,
+      [id]: Math.min(99, (prev[id] ?? 0) + 1),
     }));
   }, []);
 
-  const dec = React.useCallback((id: string) => {
+  const dec = useCallback((id: string) => {
     setQuantities((prev) => {
       const next = { ...prev };
       const q = Math.max(0, (next[id] ?? 0) - 1);
@@ -68,7 +69,7 @@ export default function useAlbumState(albumId: string) {
     });
   }, []);
 
-  const reset = React.useCallback(() => {
+  const reset = useCallback(() => {
     setQuantities({});
   }, []);
 
