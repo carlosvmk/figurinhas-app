@@ -73,5 +73,33 @@ export default function useAlbumState(albumId: string) {
     setQuantities({});
   }, []);
 
-  return { quantities, inc, dec, reset };
+  const importQuantities = useCallback(
+    (imported: Quantities) => {
+      setQuantities((prev) => {
+        const next = { ...prev };
+        for (const [id, qty] of Object.entries(imported)) {
+          next[id] = Math.min(99, (next[id] ?? 0) + qty);
+        }
+        return next;
+      });
+    },
+    []
+  );
+
+  const removeQuantities = useCallback(
+    (toRemove: Quantities) => {
+      setQuantities((prev) => {
+        const next = { ...prev };
+        for (const [id, qty] of Object.entries(toRemove)) {
+          const q = (next[id] ?? 0) - qty;
+          if (q <= 0) delete next[id];
+          else next[id] = q;
+        }
+        return next;
+      });
+    },
+    []
+  );
+
+  return { quantities, inc, dec, reset, importQuantities, removeQuantities };
 }
