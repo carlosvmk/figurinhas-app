@@ -1,6 +1,6 @@
 import type { AlbumDefinition } from "@/types/album";
 
-/** Modelos pré-prontos — usados apenas para inicialização e como templates na tela de criação. */
+/** Álbuns pré-prontos — adicionados automaticamente na primeira abertura do app. */
 export const ALBUM_TEMPLATES: AlbumDefinition[] = [
   {
     id: "topps-ucl-2025-2026",

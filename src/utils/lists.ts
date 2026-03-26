@@ -30,9 +30,24 @@ export function formatCommaListWrapped(ids: string[], perLine = 25): string {
   return lines.join("\n");
 }
 
-export function formatDuplicates(dups: Array<{ id: string; total: number }>, withQty: boolean): string {
-  if (!withQty) return dups.map((d) => d.id).join(", ");
-  return dups.map((d) => `${d.id}(x${d.total})`).join(", ");
+export function formatDuplicates(dups: Array<{ id: string; total: number }>): string {
+  const expanded: string[] = [];
+  for (const d of dups) {
+    const repeats = d.total - 1;
+    for (let i = 0; i < repeats; i++) expanded.push(d.id);
+  }
+  return expanded.join(", ");
+}
+
+export function getDuplicateStats(dups: Array<{ id: string; total: number }>): {
+  repetidasTotal: number;
+  repetidasDiferentes: number;
+} {
+  let repetidasTotal = 0;
+  for (const d of dups) {
+    repetidasTotal += d.total - 1;
+  }
+  return { repetidasTotal, repetidasDiferentes: dups.length };
 }
 
 export type WhatsappMode = "both" | "missing" | "duplicates";
@@ -41,11 +56,10 @@ export function buildWhatsappMessage(params: {
   albumName: string;
   missing: string[];
   dups: Array<{ id: string; total: number }>;
-  withQty: boolean;
   mode?: WhatsappMode;
 }): string {
-  const { albumName, missing, dups, withQty, mode = "both" } = params;
-  const rep = formatDuplicates(dups, withQty);
+  const { albumName, missing, dups, mode = "both" } = params;
+  const rep = formatDuplicates(dups);
   const falt = formatCommaList(missing);
 
   const lines: string[] = [`📚 ${albumName}`, ""];

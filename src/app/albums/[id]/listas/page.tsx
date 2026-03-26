@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import React from "react";
 import useAlbumState from "@/hooks/useAlbumState";
-import { getMissing, getDuplicates, formatCommaList, formatDuplicates } from "@/utils/lists";
+import { getMissing, getDuplicates, getDuplicateStats, formatCommaList, formatDuplicates } from "@/utils/lists";
 import { expandAlbum } from "@/utils/album";
 import { loadAlbums } from "@/utils/storage";
 import type { AlbumDefinition } from "@/types/album";
@@ -34,6 +34,7 @@ export default function ListasPage() {
 
   const missing = React.useMemo(() => getMissing(ids, quantities), [ids, quantities]);
   const dups = React.useMemo(() => getDuplicates(quantities), [quantities]);
+  const { repetidasTotal, repetidasDiferentes } = React.useMemo(() => getDuplicateStats(dups), [dups]);
 
   const fullText = React.useMemo(() => {
     const lines: string[] = [album?.name ?? "Álbum"];
@@ -49,8 +50,8 @@ export default function ListasPage() {
     }
 
     if (dups.length > 0) {
-      lines.push(`Repetidas (${dups.length}):`);
-      lines.push(formatDuplicates(dups, false));
+      lines.push(`Repetidas: ${repetidasTotal} (${repetidasDiferentes} diferentes)`);
+      lines.push(formatDuplicates(dups));
     }
 
     return lines.join("\n");
@@ -96,9 +97,9 @@ export default function ListasPage() {
 
         {dups.length > 0 && (
           <div className="mb-4">
-            <div className="font-black mb-1">Repetidas ({dups.length}):</div>
+            <div className="font-black mb-1">Repetidas: {repetidasTotal} ({repetidasDiferentes} diferentes)</div>
             <div className="font-mono text-[13px] leading-[1.35] opacity-85">
-              {formatDuplicates(dups, false)}
+              {formatDuplicates(dups)}
             </div>
           </div>
         )}

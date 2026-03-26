@@ -10,7 +10,7 @@ const QUANTITIES_SUFFIX = ":quantities";
 // ── Inicialização / Migração ──────────────────────────────────────
 
 /**
- * Na primeira abertura do app, copia os álbuns-modelo para o localStorage.
+ * Na primeira abertura do app, copia os álbuns pré-prontos para o localStorage.
  * Preserva quantities já existentes (cenário de migração).
  * Deve ser chamado antes de qualquer leitura de álbuns.
  */
@@ -38,27 +38,7 @@ export function initializeAlbums() {
   localStorage.setItem(INIT_KEY, "true");
 }
 
-// ── Export / Import ─────────────────────────────────────────────
-
-export interface BackupData {
-  version: 1;
-  exportedAt: string;
-  albums: Record<string, { quantities: Quantities }>;
-  customAlbums: AlbumDefinition[];
-}
-
-function getAllAlbumIds(): string[] {
-  const ids = new Set<string>();
-  for (const a of loadAlbums()) ids.add(a.id);
-  // also scan localStorage for any quantity keys
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i)!;
-    if (k.startsWith(QUANTITIES_PREFIX) && k.endsWith(QUANTITIES_SUFFIX)) {
-      ids.add(k.slice(QUANTITIES_PREFIX.length, -QUANTITIES_SUFFIX.length));
-    }
-  }
-  return Array.from(ids);
-}
+// ── CRUD de álbuns (fonte única: localStorage) ────────────────────
 
 function loadQuantities(albumId: string): Quantities {
   const raw = localStorage.getItem(`${QUANTITIES_PREFIX}${albumId}${QUANTITIES_SUFFIX}`);
@@ -73,97 +53,6 @@ function loadQuantities(albumId: string): Quantities {
     return {};
   }
 }
-
-export function exportData(): BackupData {
-  const albums: BackupData["albums"] = {};
-  for (const id of getAllAlbumIds()) {
-    const quantities = loadQuantities(id);
-    if (Object.keys(quantities).length > 0) {
-      albums[id] = { quantities };
-    }
-  }
-  return {
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    albums,
-    customAlbums: loadAlbums(),
-  };
-}
-
-export function downloadBackup() {
-  const data = exportData();
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const date = new Date().toISOString().slice(0, 10);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `figurinhas-backup-${date}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function isValidBackup(data: unknown): data is BackupData {
-  if (!data || typeof data !== "object") return false;
-  const d = data as Record<string, unknown>;
-  if (d.version !== 1) return false;
-  if (typeof d.exportedAt !== "string") return false;
-  if (!d.albums || typeof d.albums !== "object" || Array.isArray(d.albums)) return false;
-  if (!Array.isArray(d.customAlbums)) return false;
-  return true;
-}
-
-export type ImportMode = "merge" | "replace";
-
-export function importData(raw: string, mode: ImportMode) {
-  let data: unknown;
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    throw new Error("Arquivo inválido: não é um JSON válido.");
-  }
-
-  if (!isValidBackup(data)) {
-    throw new Error("Arquivo inválido: formato de backup não reconhecido.");
-  }
-
-  if (mode === "replace") {
-    // remove all existing quantities
-    const keysToRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i)!;
-      if (k.startsWith(QUANTITIES_PREFIX) && k.endsWith(QUANTITIES_SUFFIX)) {
-        keysToRemove.push(k);
-      }
-    }
-    for (const k of keysToRemove) localStorage.removeItem(k);
-    // replace albums
-    saveAlbums(data.customAlbums);
-  } else {
-    // merge albums: file albums take priority
-    const existing = loadAlbums();
-    const map = new Map<string, AlbumDefinition>();
-    for (const a of existing) map.set(a.id, a);
-    for (const a of data.customAlbums) map.set(a.id, a);
-    saveAlbums(Array.from(map.values()));
-  }
-
-  // write quantities
-  for (const [albumId, albumData] of Object.entries(data.albums)) {
-    if (albumData && typeof albumData === "object" && "quantities" in albumData) {
-      const key = `${QUANTITIES_PREFIX}${albumId}${QUANTITIES_SUFFIX}`;
-      if (mode === "merge") {
-        const existing = loadQuantities(albumId);
-        const merged = { ...existing, ...albumData.quantities };
-        localStorage.setItem(key, JSON.stringify(merged));
-      } else {
-        localStorage.setItem(key, JSON.stringify(albumData.quantities));
-      }
-    }
-  }
-}
-
-// ── CRUD de álbuns (fonte única: localStorage) ────────────────────
 
 export function loadAlbums(): AlbumDefinition[] {
   if (typeof window === "undefined") return [];
@@ -211,10 +100,3 @@ export function deleteAlbum(id: string) {
   // remove quantidades para não deixar lixo
   localStorage.removeItem(`${QUANTITIES_PREFIX}${id}${QUANTITIES_SUFFIX}`);
 }
-
-// ── Aliases de compatibilidade (usados pelo backup) ───────────────
-export const loadCustomAlbums = loadAlbums;
-export const saveCustomAlbums = saveAlbums;
-export const addCustomAlbum = addAlbum;
-export const updateCustomAlbum = updateAlbum;
-export const deleteCustomAlbum = deleteAlbum;

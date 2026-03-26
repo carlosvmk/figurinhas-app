@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import React, { Suspense } from "react";
 import type { AlbumDefinition, AlbumSection } from "@/types/album";
 import { addAlbum, loadAlbums, updateAlbum } from "@/utils/storage";
-import { ALBUM_TEMPLATES } from "@/data/albums";
 
 export default function NewAlbumPage() {
   return (
@@ -43,7 +42,6 @@ function NewAlbumForm() {
   const isEditing = !!editAlbum;
 
   const [name, setName] = React.useState(editAlbum?.name ?? "");
-  const [id, setId] = React.useState(editAlbum?.id ?? "");
 
   const [sections, setSections] = React.useState<AlbumSection[]>(
     editAlbum?.sections ?? [
@@ -52,19 +50,6 @@ function NewAlbumForm() {
   );
 
   const [msg, setMsg] = React.useState<string | null>(null);
-
-  // id sugerido a partir do nome (apenas no modo criação)
-  React.useEffect(() => {
-    if (!isEditing && !id) setId(slugify(name));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name]);
-
-  const applyTemplate = (tpl: AlbumDefinition) => {
-    setName(tpl.name);
-    setId(slugify(tpl.name));
-    setSections(tpl.sections.map((s) => ({ ...s })));
-    setMsg(null);
-  };
 
   const addSection = (type: "numericRange" | "prefixedRange") => {
     const nextIndex = sections.length + 1;
@@ -100,25 +85,23 @@ function NewAlbumForm() {
 
   const validate = (): string | null => {
     if (!name.trim()) return "Informe o nome do álbum.";
-    if (!id.trim()) return "Informe o ID (slug) do álbum.";
     if (sections.length === 0) return "Adicione ao menos uma seção.";
 
     // valida ranges
     for (const s of sections) {
-      if (!s.label.trim()) return "Toda seção precisa de um nome (label).";
-      if (!isPositiveInt((s as any).start) || !isPositiveInt((s as any).end)) return "Start/End precisam ser inteiros positivos.";
+      if (!s.label.trim()) return "Toda seção precisa de um nome.";
+      if (!isPositiveInt((s as any).start) || !isPositiveInt((s as any).end)) return "Início/Fim precisam ser inteiros positivos.";
       const start = Number((s as any).start);
       const end = Number((s as any).end);
-      if (start > end) return `Na seção "${s.label}", start não pode ser maior que end.`;
+      if (start > end) return `Na seção "${s.label}", início não pode ser maior que fim.`;
 
       if (s.type === "prefixedRange") {
         if (!s.prefix.trim()) return `Na seção "${s.label}", informe o prefixo (ex.: E, CB, F).`;
-        // normalize prefix
         if (!/^[A-Za-z0-9]+$/.test(s.prefix)) return `Na seção "${s.label}", prefixo só pode ter letras/números.`;
       }
     }
 
-    // valida conflito de IDs gerados (ex.: 1 e 01, ou E1 repetido)
+    // valida conflito de IDs gerados
     const seen = new Set<string>();
     for (const s of sections) {
       const start = Number((s as any).start);
@@ -141,8 +124,10 @@ function NewAlbumForm() {
       return;
     }
 
+    const albumId = isEditing ? editAlbum!.id : slugify(name);
+
     const album: AlbumDefinition = {
-      id: id.trim(),
+      id: albumId,
       name: name.trim(),
       sections: sections.map((s) => {
         if (s.type === "prefixedRange") {
@@ -189,24 +174,6 @@ function NewAlbumForm() {
         </div>
       )}
 
-      {/* Modelos pré-prontos (apenas no modo criação) */}
-      {!isEditing && (
-        <div className="mb-3.5 border border-black/12 rounded-2xl p-3.5 bg-card shadow-card">
-          <div className="font-[950] mb-2">Começar de um modelo</div>
-          <div className="flex gap-2 flex-wrap">
-            {ALBUM_TEMPLATES.map((tpl) => (
-              <button
-                key={tpl.id}
-                onClick={() => applyTemplate(tpl)}
-                className="px-3.5 py-2.5 rounded-xl border border-border-default font-bold cursor-pointer bg-transparent text-inherit hover:bg-black/[0.04] transition-colors"
-              >
-                {tpl.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div className="grid gap-3 mb-3.5 border border-black/12 rounded-2xl p-3.5 bg-card shadow-card">
         <label className="font-black">Nome do álbum</label>
         <input
@@ -215,22 +182,6 @@ function NewAlbumForm() {
           placeholder="ex.: Brasileirão 2025"
           className="px-3 py-2.5 rounded-xl border border-border-default"
         />
-
-        <label className="font-black">ID (slug)</label>
-        <input
-          value={id}
-          disabled={isEditing}
-          onChange={(e) => setId(e.target.value)}
-          placeholder="ex.: brasileirao-2025"
-          className="px-3 py-2.5 rounded-xl border border-border-default disabled:opacity-50 disabled:cursor-not-allowed"
-        />
-
-        <div className="opacity-75 font-bold">
-          {isEditing
-            ? "O ID não pode ser alterado para manter os dados existentes."
-            : <>Dica: o ID vira a URL: <span className="font-mono">/album/{id || "..."}</span></>
-          }
-        </div>
       </div>
 
       <div className="flex gap-2 flex-wrap mb-2.5">
@@ -289,7 +240,7 @@ function NewAlbumForm() {
 
             <div className="grid gap-2.5 grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
               <div className="grid gap-1.5">
-                <label className="font-extrabold">Label</label>
+                <label className="font-extrabold">Nome</label>
                 <input
                   value={s.label}
                   onChange={(e) => updateSection(s.id, { label: e.target.value } as any)}
@@ -310,7 +261,7 @@ function NewAlbumForm() {
               )}
 
               <div className="grid gap-1.5">
-                <label className="font-extrabold">Start</label>
+                <label className="font-extrabold">Início</label>
                 <input
                   value={(s as any).start}
                   onChange={(e) => updateSection(s.id, { start: Number(e.target.value) } as any)}
@@ -320,7 +271,7 @@ function NewAlbumForm() {
               </div>
 
               <div className="grid gap-1.5">
-                <label className="font-extrabold">End</label>
+                <label className="font-extrabold">Fim</label>
                 <input
                   value={(s as any).end}
                   onChange={(e) => updateSection(s.id, { end: Number(e.target.value) } as any)}
